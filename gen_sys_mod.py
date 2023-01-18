@@ -16,9 +16,6 @@ MTTF=data_np[:,2]
 failure_rate=np.divide(np.ones(shape=np.shape(MTTF)),MTTF)
 repair_rate=np.divide(np.ones(shape=np.shape(MTTR)),MTTR)
 total_units=np.sum(units)
-combos=0
-for i in range(1,total_units+1):
-    combos+=comb(32,i)
 failure_for_size={}
 repair_for_size={}
 units_for_size={}
