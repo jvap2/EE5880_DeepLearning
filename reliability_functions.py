@@ -1,10 +1,21 @@
 import numpy as np
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
+    '''
+    Input Parameters
+    unit: dtype=dict, keys are the size of a unit, the values are the number of said units of a particular size
+    failure_rate: d_type=dict, keys are the size of a unit, the values are the failure rates of the specific units
+    repair_rate: d_type=dict, keys are the size of a unit, the values are the repair rates of the specific units
+
+    Returns:
+    Cap_P: dtype=dict, keys are the size of a unit, and the values are the Probability
+    Cap_F: dtype=dict, keys are the size of a unit, and the values are the Frequency
+    '''
     num_units=sum(unit.values())
     p=np.ndarray(shape=num_units)
     q=np.ndarray(shape=num_units)
     mu=np.ndarray(shape=num_units)
+    ''' Create the probability of success and failure, and the repair rates into arrays'''
     Max_Cap=0
     last_key=0
     for (i,key) in enumerate(failure_rate.keys()):
