@@ -23,7 +23,9 @@ for (i,value) in enumerate(size):
     failure_for_size[value]=failure_rate[i]
     repair_for_size[value]=repair_rate[i]
     units_for_size[value]=units[i]
-Unit_Addition_Algorithm(units_for_size,failure_for_size,repair_for_size)
+C_P, C_F= Unit_Addition_Algorithm(units_for_size,failure_for_size,repair_for_size)
+print(C_P)
+print(C_F)
 
 
 

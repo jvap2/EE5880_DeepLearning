@@ -19,12 +19,14 @@ def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
         Max_Cap+=key*u
     Cap_P={}
     Cap_F={}
-    cap_list=np.empty(shape=(num_units+1))
+    cap_list=np.empty(shape=(num_units+1), dtype=np.int64)
     cap_list[0]=0
     last_key=0
     for key in unit.keys():
         for j in range(unit[key]):
             cap_list[last_key+j+1]=cap_list[last_key+j]+key
+            Cap_P[cap_list[last_key+j+1]]=0
+            Cap_F[cap_list[last_key+j+1]]=0
         last_key+=unit[key]
     Cap_P[cap_list[0]]=1
     Cap_F[cap_list[0]]=0
@@ -37,6 +39,12 @@ def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     while state<Max_Cap:
         for i in range(1,state_index+1):
             for j in range(i):
-                pass
-    
+                Cap_P[cap_list[i]]=Old_Cap_P[cap_list[i]]*p[state_index]+Old_Cap_P[cap_list[j]]*q[state_index]
+                Cap_F[cap_list[i]]=Old_Cap_F[cap_list[i]]*p[state_index]+Old_Cap_F[cap_list[j]]*q[state_index]+\
+                    (Old_Cap_P[cap_list[j]]-Old_Cap_P[cap_list[i]])*q[state_index]*p[state_index]
+        Old_Cap_P=Cap_P
+        Old_Cap_F=Cap_F
+        state=cap_list[state_index+1]
+        state_index+=1
+    return Cap_P, Cap_F
     
