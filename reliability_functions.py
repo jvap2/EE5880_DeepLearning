@@ -12,8 +12,8 @@ def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
         r=1-f
         u=unit[key]
         repair=repair_rate[key]
-        p[last_key:last_key+u]=f
-        q[last_key:last_key+u]=r
+        p[last_key:last_key+u]=r
+        q[last_key:last_key+u]=f
         mu[last_key:last_key+u]=repair
         last_key+=unit[key]
         Max_Cap+=key*u
@@ -28,22 +28,21 @@ def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
             Cap_P[cap_list[last_key+j+1]]=0
             Cap_F[cap_list[last_key+j+1]]=0
         last_key+=unit[key]
+    print(cap_list[0])
     Cap_P[cap_list[0]]=1
     Cap_F[cap_list[0]]=0
     Cap_P[cap_list[1]]=q[0]
-    Cap_P[cap_list[1]]=q[0]*mu[0]
-    Old_Cap_P=Cap_P
-    Old_Cap_F=Cap_F
+    Cap_F[cap_list[1]]=q[0]*mu[0]
+    Old_Cap_P,Old_Cap_F=Cap_P.copy(),Cap_F.copy()
     state=24
     state_index=2
     while state<Max_Cap:
-        for i in range(1,state_index+1):
+        for i in range(1,state_index):
             for j in range(i):
                 Cap_P[cap_list[i]]=Old_Cap_P[cap_list[i]]*p[state_index]+Old_Cap_P[cap_list[j]]*q[state_index]
-                Cap_F[cap_list[i]]=Old_Cap_F[cap_list[i]]*p[state_index]+Old_Cap_F[cap_list[j]]*q[state_index]+\
-                    (Old_Cap_P[cap_list[j]]-Old_Cap_P[cap_list[i]])*q[state_index]*p[state_index]
-        Old_Cap_P=Cap_P
-        Old_Cap_F=Cap_F
+                Cap_F[cap_list[i]]=Old_Cap_F[cap_list[i]]*p[state_index]+Old_Cap_F[cap_list[j]]*q[state_index]+(Old_Cap_P[cap_list[j]]-Old_Cap_P[cap_list[i]])*q[state_index]*mu[state_index]
+        Old_Cap_P=Cap_P.copy()
+        Old_Cap_F=Cap_F.copy()
         state=cap_list[state_index+1]
         state_index+=1
     return Cap_P, Cap_F
