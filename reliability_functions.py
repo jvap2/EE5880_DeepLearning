@@ -15,6 +15,7 @@ def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     p=np.ndarray(shape=num_units)
     q=np.ndarray(shape=num_units)
     mu=np.ndarray(shape=num_units)
+    state_added=np.ndarray(shape=num_units)
     ''' Create the probability of success and failure, and the repair rates into arrays'''
     Max_Cap=0
     last_key=0
@@ -26,7 +27,8 @@ def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
         p[last_key:last_key+u]=r
         q[last_key:last_key+u]=f
         mu[last_key:last_key+u]=repair
-        last_key+=unit[key]
+        state_added[last_key:last_key+u]=key
+        last_key+=u
         Max_Cap+=key*u
     Cap_P={}
     Cap_F={}
@@ -49,9 +51,17 @@ def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     state_index=2
     while state<Max_Cap:
         for i in range(1,state_index):
-            for j in range(i):
-                Cap_P[cap_list[i]]=Old_Cap_P[cap_list[i]]*p[state_index]+Old_Cap_P[cap_list[j]]*q[state_index]
-                Cap_F[cap_list[i]]=Old_Cap_F[cap_list[i]]*p[state_index]+Old_Cap_F[cap_list[j]]*q[state_index]+(Old_Cap_P[cap_list[j]]-Old_Cap_P[cap_list[i]])*q[state_index]*mu[state_index]
+            j_state=cap_list[i]-state_added[state_index]
+            truth=(j_state in cap_list)
+            if not truth:
+                m=1
+                temp=cap_list[0]
+                while j_state>cap_list[m]:
+                    temp=cap_list[m]
+                    m+=1
+                j_state=temp
+            Cap_P[cap_list[i]]=Old_Cap_P[cap_list[i]]*p[state_index]+Old_Cap_P[j_state]*q[state_index]
+            Cap_F[cap_list[i]]=Old_Cap_F[cap_list[i]]*p[state_index]+Old_Cap_F[j_state]*q[state_index]+(Old_Cap_P[j_state]-Old_Cap_P[cap_list[i]])*q[state_index]*mu[state_index]
         Old_Cap_P=Cap_P.copy()
         Old_Cap_F=Cap_F.copy()
         state=cap_list[state_index+1]
