@@ -1,4 +1,6 @@
 import numpy as np
+import math
+from math import floor
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     '''
@@ -67,4 +69,35 @@ def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
         state=cap_list[state_index+1]
         state_index+=1
     return Cap_P, Cap_F
-    
+
+
+def Load_Model_Algorithm(min,max,load):
+    N_1=0
+    N_2=len(load)-1
+    Z=1
+    N_H=N_2-N_1+1
+    n_L=floor(max//Z)-floor(min//Z)+1
+    print(type(n_L))
+    P_L={}
+    F_L={}
+    load_states=np.linspace(floor(min),floor(max),n_L,dtype=np.int64)##L_j
+    for elements in load_states:
+        P_L[elements]=0
+        F_L[elements]=0
+    i=N_1
+    while i<=N_2:
+        J=int(load[i]//Z)
+        for j in range(J):
+            if load_states[j]>=load[i]:
+                P_L[load_states[j]]+=1
+        J_1=int(load[i+1]//Z)
+        J+=1
+        if J_1>=J:
+            for k in range(J,J_1):
+                F_L[load_states[k]]+=1
+        i+=1
+    P_L.values()/N_H
+    F_L.values()/N_H
+    return P_L,F_L
+
+
