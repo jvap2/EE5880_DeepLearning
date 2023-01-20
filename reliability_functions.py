@@ -100,6 +100,8 @@ def Load_Model_Algorithm(min,max,load):
     for i,(prob,freq) in enumerate(zip(P_L.values(),F_L.values())):
         P_L[i]=prob/N_H
         F_L[i]=freq/N_H
+    P_L={key: item for key, item in P_L.items() if key>964 }
+    F_L={key: item for key, item in F_L.items() if key>964 }
     return P_L,F_L
 
 
