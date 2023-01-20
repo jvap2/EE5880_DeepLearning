@@ -74,6 +74,7 @@ def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
 def Load_Model_Algorithm(min,max,load):
     Z=1
     N_L=floor(max)//Z+1
+    print(N_L)
     P_L={}
     F_L={}
     load_levels=np.linspace(0,max,N_L, dtype=np.int64)
@@ -85,16 +86,20 @@ def Load_Model_Algorithm(min,max,load):
     for elements in load_levels:
         P_L[elements]=0
         F_L[elements]=0
-    while i<N_2:
+    while i<=N_2:
         i_hour_contrib=load[i]
         J=floor(i_hour_contrib)//Z
         for j in range(J+1):
-            P_L[j]+=1/N_H
-        J_1=floor(load[i+1])//Z
+            P_L[j]+=1
+        if i+1<=N_2:
+            J_1=floor(load[i+1])//Z
         if J_1>=J:
             for q in range(J,J_1+1):
-                F_L[q]+=1/N_H
+                F_L[q]+=1
         i+=1
+    for i,(prob,freq) in enumerate(zip(P_L.values(),F_L.values())):
+        P_L[i]=prob/N_H
+        F_L[i]=freq/N_H
     return P_L,F_L
 
 

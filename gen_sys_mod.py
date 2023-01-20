@@ -34,7 +34,6 @@ C_P, C_F= Unit_Addition_Algorithm(units_for_size,failure_for_size,repair_for_siz
 d_CP=pd.DataFrame.from_dict(C_P, orient='index',columns=['P'])
 d_CF=pd.DataFrame.from_dict(C_F, orient='index',columns=['F'])
 final_df=pd.concat([d_CP,d_CF],axis=1)
-print(final_df)
 final_df.to_csv("Gen_Sys_Reliability.csv")
 
 
