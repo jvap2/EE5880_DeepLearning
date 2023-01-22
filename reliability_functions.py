@@ -121,8 +121,23 @@ def Generation_Reserve(P_L,F_L,P_G,F_G,load_idx, gen_idx):
         for(j,g_idx) in enumerate(load_idx):
             M[i,j]=g_idx-l_idx
     M=M.flatten()
-    M_final=np.unique(M)
+    M_final=np.unique(M[M>=0])
     print(M_final)
-
+    C_c=np.max(gen_idx)
+    P={}
+    F={}
+    P_L_List=list(P_L.keys())
+    P_L_Max=max(P_L_List)
+    P_L_Min=min(P_L_List)
+    for i in range(len(M_final)-1,-1,-1):
+        for j in range(len(gen_idx)):
+            idx=C_c-gen_idx[j]-M_final[i]
+            if idx>P_L_Max or idx<P_L_Min:
+                P[M_final[i]]+=0
+            else:
+                if j==len(gen_idx)-1:
+                    P[M_final[i]]+=P_G[j]*P_L[idx]
+                else:
+                    P[M_final[i]]+=(P_G[j]-P_G[j+1])*P_L[idx]
 
 

@@ -24,6 +24,6 @@ for (i,load_idx) in enumerate(load_def_idx):
 for (j, gen_idx) in enumerate(gen_sys_idx):
     P_G_dict[gen_idx]=P_G[j]
     F_G_dict[gen_idx]=F_G[j]
-
+n_g=32
 Generation_Reserve(P_L_dict,F_L_dict,P_G_dict,F_G_dict,load_def_idx,gen_sys_idx)
 
