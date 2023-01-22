@@ -68,7 +68,16 @@ def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
         Old_Cap_F=Cap_F.copy()
         state=cap_list[state_index+1]
         state_index+=1
-    return Cap_P, Cap_F
+    Final_Cap_P=Cap_P.copy()
+    Final_Cap_F=Cap_F.copy()
+    count=0
+    for i in range(Max_Cap):
+        if i!=cap_list[count]:
+            Final_Cap_F[i]=Cap_F[cap_list[count]]
+            Final_Cap_P[i]=Cap_P[cap_list[count]]
+        else:
+            count+=1
+    return Final_Cap_P, Final_Cap_F
 
 
 def Load_Model_Algorithm(min,max,load):
@@ -103,6 +112,17 @@ def Load_Model_Algorithm(min,max,load):
     P_L={key: item for key, item in P_L.items() if key>964 }
     F_L={key: item for key, item in F_L.items() if key>964 }
     return P_L,F_L
+
+
+def Generation_Reserve(P_L,F_L,P_G,F_G,load_idx, gen_idx):
+    '''Generate a list of possible M_i'''
+    M=np.empty(shape=(len(gen_idx),len(load_idx)))
+    for (i,l_idx) in enumerate(gen_idx):
+        for(j,g_idx) in enumerate(load_idx):
+            M[i,j]=g_idx-l_idx
+    M=M.flatten()
+    M_final=np.unique(M)
+    print(M_final)
 
 
 
