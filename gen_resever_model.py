@@ -9,8 +9,8 @@ np_load=load_def.to_numpy()
 gen_sys_idx=np_gen[:,0]
 P_G=np_gen[:,1]
 F_G=np_gen[:,2]
-P_L=np_load[:,0]
-F_L=np_load[:,1]
+P_L=np_load[:,1]
+F_L=np_load[:,2]
 load_def_idx=np.array(load_def.index)
 P_G_dict={}
 F_G_dict={}
@@ -25,5 +25,9 @@ for (j, gen_idx) in enumerate(gen_sys_idx):
     P_G_dict[gen_idx]=P_G[j]
     F_G_dict[gen_idx]=F_G[j]
 n_g=32
-Generation_Reserve(P_L_dict,F_L_dict,P_G_dict,F_G_dict,load_def_idx,gen_sys_idx)
+P,F=Generation_Reserve(P_L_dict,F_L_dict,P_G_dict,F_G_dict,load_def_idx,gen_sys_idx)
+P_df=pd.DataFrame.from_dict(P,orient='index',columns=['P'])
+F_df=pd.DataFrame.from_dict(F,orient='index',columns=['F'])
+final=pd.concat([P_df,F_df],axis=1)
+final.to_csv("Gen_Res.csv")
 

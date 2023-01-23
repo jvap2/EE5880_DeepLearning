@@ -122,10 +122,15 @@ def Generation_Reserve(P_L,F_L,P_G,F_G,load_idx, gen_idx):
             M[i,j]=g_idx-l_idx
     M=M.flatten()
     M_final=np.unique(M[M>=0])
+    M_final=np.array(M_final,dtype=np.int64)
+    gen_idx=np.array(gen_idx,dtype=np.int64)
     print(M_final)
-    C_c=np.max(gen_idx)
+    C_c=int(np.max(gen_idx))
     P={}
     F={}
+    for value in M_final:
+        P[value]=0
+        F[value]=0
     P_L_List=list(P_L.keys())
     P_L_Max=max(P_L_List)
     P_L_Min=min(P_L_List)
@@ -137,7 +142,10 @@ def Generation_Reserve(P_L,F_L,P_G,F_G,load_idx, gen_idx):
             else:
                 if j==len(gen_idx)-1:
                     P[M_final[i]]+=P_G[j]*P_L[idx]
+                    F[M_final[i]]+=F_G[j]*P_L[idx]+P_G[j]*F_L[idx]
                 else:
                     P[M_final[i]]+=(P_G[j]-P_G[j+1])*P_L[idx]
+                    F[M_final[i]]+=(F_G[j]-F_G[j+1])*P_L[idx]+(P_G[j]-P_G[j+1])*F_L[idx]
+    return P,F
 
 
