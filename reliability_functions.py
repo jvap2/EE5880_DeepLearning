@@ -121,7 +121,7 @@ def Generation_Reserve(P_L,F_L,P_G,F_G,load_idx, gen_idx):
         for(j,g_idx) in enumerate(load_idx):
             M[i,j]=g_idx-l_idx
     M=M.flatten()
-    M_final=np.unique(M[M>=0])
+    M_final=np.unique(M)
     M_final=np.array(M_final,dtype=np.int64)
     gen_idx=np.array(gen_idx,dtype=np.int64)
     print(M_final)
