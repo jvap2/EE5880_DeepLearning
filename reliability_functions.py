@@ -146,6 +146,9 @@ def Generation_Reserve(P_L,F_L,P_G,F_G,load_idx, gen_idx):
                 else:
                     P[M_final[i]]+=(P_G[j]-P_G[j+1])*P_L[idx]
                     F[M_final[i]]+=(F_G[j]-F_G[j+1])*P_L[idx]+(P_G[j]-P_G[j+1])*F_L[idx]
+    for value in M_final:
+        P[value]*=(365*24)
+        F[value]*=(365*24)
     return P,F
 
 
