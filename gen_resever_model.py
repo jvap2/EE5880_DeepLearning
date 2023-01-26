@@ -28,16 +28,18 @@ n_g=32
 P={}
 F={}
 P,F=Generation_Reserve(P_L_dict,F_L_dict,P_G_dict,F_G_dict,load_def_idx,gen_sys_idx)
-LOLP=P[0]
+LOLE=P[0]
 LOLF=F[0]
+LOLP=P[0]/(24*365)
+print(LOLP)
 EPNS=0
 for i in range(-1885,1,1):
     EPNS+=P[i]
-EPNS-=.5*(P[0]+P[-1885])
+EPNS+=(-.5*(P[0]+P[-1885]))
 P_df=pd.DataFrame.from_dict(P,orient='index',columns=['P'])
 F_df=pd.DataFrame.from_dict(F,orient='index',columns=['F'])
 final=pd.concat([P_df,F_df],axis=1)
 final.to_csv("Gen_Res.csv")
-Final_Res={"LOLP":LOLP,"LOLF":LOLF,"EPNS":EPNS}
+Final_Res={"LOLE":LOLE,"LOLF":LOLF,"EPNS":EPNS, "LOLP": LOLP}
 Final_df=pd.DataFrame.from_dict(Final_Res,orient='index')
 Final_df.to_csv("Import_stat.csv")
