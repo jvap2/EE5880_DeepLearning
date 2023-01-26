@@ -37,47 +37,47 @@ def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     cap_list=np.empty(shape=(num_units+1), dtype=np.int64)
     cap_list[0]=0
     last_key=0
-    for key in unit.keys():
-        for j in range(unit[key]):
-            cap_list[last_key+j+1]=cap_list[last_key+j]+key
-            Cap_P[cap_list[last_key+j+1]]=0
-            Cap_F[cap_list[last_key+j+1]]=0
-        last_key+=unit[key]
-    print(cap_list[0])
-    Cap_P[cap_list[0]]=1
-    Cap_F[cap_list[0]]=0
-    Cap_P[cap_list[1]]=q[0]
-    Cap_F[cap_list[1]]=q[0]*mu[0]
-    Old_Cap_P,Old_Cap_F=Cap_P.copy(),Cap_F.copy()
-    state=24
-    state_index=2
-    while state<Max_Cap:
-        for i in range(1,state_index):
-            j_state=cap_list[i]-state_added[state_index]
-            truth=(j_state in cap_list)
-            if not truth:
-                m=1
-                temp=cap_list[0]
-                while j_state>cap_list[m]:
-                    temp=cap_list[m]
-                    m+=1
-                j_state=temp
-            Cap_P[cap_list[i]]=Old_Cap_P[cap_list[i]]*p[state_index]+Old_Cap_P[j_state]*q[state_index]
-            Cap_F[cap_list[i]]=Old_Cap_F[cap_list[i]]*p[state_index]+Old_Cap_F[j_state]*q[state_index]+(Old_Cap_P[j_state]-Old_Cap_P[cap_list[i]])*q[state_index]*mu[state_index]
-        Old_Cap_P=Cap_P.copy()
-        Old_Cap_F=Cap_F.copy()
-        state=cap_list[state_index+1]
-        state_index+=1
-    Final_Cap_P=Cap_P.copy()
-    Final_Cap_F=Cap_F.copy()
-    count=0
     for i in range(Max_Cap):
-        if i!=cap_list[count]:
-            Final_Cap_F[i]=Cap_F[cap_list[count]]
-            Final_Cap_P[i]=Cap_P[cap_list[count]]
-        else:
-            count+=1
-    return Final_Cap_P, Final_Cap_F
+        Cap_P[i]=0
+        Cap_F[i]=0
+    print(cap_list[0])
+    Cap_P[0]=1
+    Cap_F[0]=0
+    for i in range(1,int(state_added[0]+1)):
+        Cap_P[i]=q[0]
+        Cap_F[i]=q[0]*mu[0]
+    P_1={}
+    F_1={}
+    P_i={}
+    F_i={}
+    P_i={}
+    F_i={}
+    for i in range(Max_Cap):
+        P_1[i]=0
+        F_1[i]=0
+        P_i[i]=0
+        F_i[i]=0
+        P_i[i]=0
+        F_i[i]=0
+    g=0
+    for i in range(1,32):
+        g+=state_added[i]
+        P_test=Cap_P.copy()
+        F_test=Cap_F.copy()
+        for j in range(int(g+1)):
+            P_i=P_test[j]
+            F_i=F_test[j]
+            if j-state_added[i]<=0:
+                P_j=1
+                F_j=0
+            else:
+                P_j=Cap_P[j-state_added[i]]
+                F_j=Cap_F[j-state_added[i]]
+            P_1[j]=P_i*p[i]+P_j*q[i]
+            F_1[j]=F_i*p[i]+F_j*q[i]+(P_j-P_i)*q[i]*mu[i]
+        Cap_P=P_1.copy()
+        Cap_F=F_1.copy()
+    return Cap_P, Cap_F
 
 
 def Load_Model_Algorithm(min,max,load):
