@@ -80,7 +80,7 @@ def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     return Cap_P, Cap_F
 
 
-def Load_Model_Algorithm(min,max,load):
+def Load_Model_Algorithm(max,load):
     Z=1
     N_L=floor(max)//Z+1
     print(N_L)
@@ -96,14 +96,14 @@ def Load_Model_Algorithm(min,max,load):
         P_L[elements]=0
         F_L[elements]=0
     J=1E6    
+    P_L[max+1]=0
+    F_L[max+1]=0
     while i<=N_2:
-        i_hour_contrib=load[i]
-        J_1=floor(i_hour_contrib)//Z+1
-        for j in range(1,J_1):
+        i_hour_contrib=load[i] ## find the exact value at the the ith hour
+        J_1=floor(i_hour_contrib)//Z+1 ##find the integer contribution from the ith hour
+        for j in range(J_1+1):
             P_L[j]+=1
-        if i+1<=N_2:
-            J_1=floor(load[i+1])//Z
-        if J_1>=J:
+        if J_1>J:
             for q in range(J,J_1):
                 F_L[q]+=1
         J=J_1
@@ -111,7 +111,7 @@ def Load_Model_Algorithm(min,max,load):
     for i,(prob,freq) in enumerate(zip(P_L.values(),F_L.values())):
         P_L[i]=prob/N_H
         F_L[i]=freq/N_H
-    P_L[0]=0
+    P_L[0]=1.0
     # P_L={key: item for key, item in P_L.items() if key>964 }
     # F_L={key: item for key, item in F_L.items() if key>964 }
     return P_L,F_L
