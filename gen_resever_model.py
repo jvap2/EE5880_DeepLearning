@@ -33,9 +33,9 @@ LOLF=F[0]
 LOLP=P[0]/(24*365)
 print(LOLP)
 EPNS=0
-for i in range(-1885,1,1):
+for i in range(-2851,1,1):
     EPNS+=P[i]
-EPNS+=(-.5*(P[0]+P[-1885]))
+EPNS+=(-.5*(P[0]+min(P.keys())))
 P_df=pd.DataFrame.from_dict(P,orient='index',columns=['P'])
 F_df=pd.DataFrame.from_dict(F,orient='index',columns=['F'])
 final=pd.concat([P_df,F_df],axis=1)
