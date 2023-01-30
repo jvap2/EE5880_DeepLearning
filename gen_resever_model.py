@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from reliability_functions import Generation_Reserve
+from reliability_functions import Generation_Reserve, Get_LOLP_LOLF,Gen_Res_V2
 
 gen_sys_df=pd.read_csv('Gen_Sys_Reliability.csv')
 load_def=pd.read_csv('Load_Model.csv')
@@ -33,7 +33,7 @@ LOLF=F[0]
 LOLP=P[0]/(24*365)
 print(LOLP)
 EPNS=0
-for i in range(-2851,1,1):
+for i in range(-max(P_L_dict.keys())+1,1,1):
     EPNS+=P[i]
 EPNS+=(-.5*(P[0]+min(P.keys())))
 P_df=pd.DataFrame.from_dict(P,orient='index',columns=['P'])
@@ -43,3 +43,21 @@ final.to_csv("Gen_Res.csv")
 Final_Res={"LOLE":LOLE,"LOLF":LOLF,"EPNS":EPNS, "LOLP": LOLP}
 Final_df=pd.DataFrame.from_dict(Final_Res,orient='index')
 Final_df.to_csv("Import_stat.csv")
+P_test={}
+F_test={}
+P_test,F_test=Gen_Res_V2(P_L_dict,F_L_dict,P_G_dict,F_G_dict)
+P_df=pd.DataFrame.from_dict(P_test,orient='index',columns=['P'])
+F_df=pd.DataFrame.from_dict(F_test,orient='index',columns=['F'])
+final=pd.concat([P_df,F_df],axis=1)
+final.to_csv("Gen_Res_2.csv")
+LOLE=P_test[0]
+LOLF=F_test[0]
+LOLP=P_test[0]/(24*365)
+print(LOLP)
+EPNS=0
+for i in range(-max(P_L_dict.keys())+1,1,1):
+    EPNS+=P_test[i]
+EPNS+=(-.5*(P_test[0]+min(P_test.keys())))
+Final_Res={"LOLE":LOLE,"LOLF":LOLF,"EPNS":EPNS, "LOLP": LOLP}
+Final_df=pd.DataFrame.from_dict(Final_Res,orient='index')
+Final_df.to_csv("Import_stat_2.csv")

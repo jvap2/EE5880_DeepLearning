@@ -126,8 +126,10 @@ def Generation_Reserve(P_L,F_L,P_G,F_G,load_idx, gen_idx):
     M=M.flatten()
     M_final=np.unique(M)
     M_final=np.array(M_final,dtype=np.int64)
+    M_final=M_final[M_final>(-max(P_L.keys()))]
     gen_idx=np.array(gen_idx,dtype=np.int64)
     print(M_final)
+    print(np.isin(-1,M_final))
     C_c=int(np.max(gen_idx))
     P={}
     F={}
@@ -140,7 +142,7 @@ def Generation_Reserve(P_L,F_L,P_G,F_G,load_idx, gen_idx):
     for i in range(len(M_final)-1,-1,-1):
         for j in range(len(gen_idx)):
             idx=C_c-gen_idx[j]-M_final[i]
-            if idx>P_L_Max or idx<P_L_Min:
+            if idx>P_L_Max or idx<0:
                 P[M_final[i]]+=0
             else:
                 if j==len(gen_idx)-1:
@@ -154,4 +156,68 @@ def Generation_Reserve(P_L,F_L,P_G,F_G,load_idx, gen_idx):
         F[value]*=(365*24)
     return P,F
 
+def Get_LOLP_LOLF(P_G,F_G,P_L,F_L):
+    PM,FM=0,0
+    for i in range(1544):
+        PCO=P_G[i]-P_G[i+1]
+        FCO=F_G[i]-F_G[i+1]
+        if (max(list(P_G.keys()))-i+2)>=max(list(P_L.keys())):
+            pl=0
+            fl=0
+        else:
+            pl=P_L[(max(list(P_G.keys()))-i+2)]
+            fl=F_L[(max(list(P_G.keys()))-i+2)]
+        PM+=PCO*pl
+        FM+=FCO*pl
+        FM+=PCO*fl
+    PM*=(24*365)
+    FM*=(24*365)
+    return PM,FM
 
+
+def Gen_Res_V2(P_L,F_L,P_G,F_G):
+    Load=np.array(list(P_L.keys()))
+    Gen=max(list(P_G.keys()))-list(P_G.keys())
+    C=np.array(list(P_G.keys()))
+    M=np.empty(shape=(len(Gen),len(Load)))
+    for (i,l_idx) in enumerate(Gen):
+        for(j,g_idx) in enumerate(Load):
+            M[i,j]=g_idx-l_idx
+    M=M.flatten()
+    M_final=np.unique(M)
+    M_final=np.array(M_final,dtype=np.int64)
+    M_final=M_final[M_final>(-max(P_L.keys()))]
+    P={}
+    F={}
+
+    PM=0
+    FM=0
+    C_c=max(list(P_G.keys()))
+    count=0
+    for M in M_final:
+        P[M]=0
+        F[M]=0
+        for (j,Cap) in enumerate(C):
+            idx=int(C_c-Cap-M)
+            if idx>max(P_L.keys()) or idx<min(P_L.keys()):
+                pl=0
+                fl=0
+            else:
+                pl=P_L[idx]
+                fl=F_L[idx]
+            if j==len(C)-1:
+                PCO=P_G[j]
+                FCO=F_G[j]
+            else:
+                PCO=P_G[j]-P_G[j+1]
+                FCO=P_G[j]-F_G[j+1]
+            PM+=PCO*pl
+            FM+=FCO*pl
+            FM+=PCO*fl
+        P[M]=PM 
+        F[M]=FM 
+        FM,PM=0,0
+    for value in M_final:
+        P[value]*=(365*24)
+        F[value]*=(365*24)
+    return P,F
