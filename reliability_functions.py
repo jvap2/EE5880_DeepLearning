@@ -226,15 +226,15 @@ def Gen_Res_V2(P_L,F_L,P_G,F_G):
 def Seq_MC(fail,success,N):
     if len(fail)!=N or len(success)!=N:
         return
-    state=np.ones(N)
-    rng=np.random.default_rng(69)
-    rand_num=rng.random(size=N)
-    time=np.divide(np.log(rand_num),fail)
-    MaxIter=1e5
+    MaxIter=100000
     k=0
     t=0
     t_total=np.empty(shape=MaxIter)
     for i in range(MaxIter):
+        state=np.ones(N)
+        rng=np.random.default_rng(69)
+        rand_num=rng.random(size=N)
+        time=np.divide(-np.log(rand_num),fail)
         while not np.all(state==0):
             low_time=np.min(time)
             low_index=np.where(time==low_time)
@@ -243,17 +243,25 @@ def Seq_MC(fail,success,N):
             low_rand_num=rng.random(size=len(low_index))
             if state[low_index]==1:
                 for (j,idx) in enumerate(low_index):
-                    time[idx]=np.divide(np.log(low_rand_num[j]),fail[idx])
+                    time[idx]=np.divide(-np.log(low_rand_num[j]),fail[idx])
                     state[idx]=0
             else:
                 for (j,idx) in enumerate(low_index):
-                    time[idx]=np.divide(np.log(low_rand_num[j]),success[idx])
+                    time[idx]=np.divide(-np.log(low_rand_num[j]),success[idx])
                     state[idx]=1    
         k+=1
         t_total[i]=t
         t=0
     t_mean=np.mean(t_total)
     f=k/sum(t_total)
-    p=f/np.sum(f)
+    p=f/np.sum(success)
     return t_mean,f,p
           
+
+fail=np.array([.01,.012])
+success=np.array([.125,1/6])
+N=2
+t,freq,prob=Seq_MC(fail,success,N)
+print(t)
+print(freq)
+print(prob)
