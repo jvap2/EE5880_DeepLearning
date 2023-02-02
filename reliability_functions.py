@@ -226,29 +226,27 @@ def Gen_Res_V2(P_L,F_L,P_G,F_G):
 def Seq_MC(fail,success,N):
     if len(fail)!=N or len(success)!=N:
         return
-    MaxIter=100000
+    MaxIter=1000000
     k=0
     t=0
     t_total=np.empty(shape=MaxIter)
     for i in range(MaxIter):
         state=np.ones(N)
-        rng=np.random.default_rng(69)
+        rng=np.random.default_rng(k)
         rand_num=rng.random(size=N)
         time=np.divide(-np.log(rand_num),fail)
         while not np.all(state==0):
             low_time=np.min(time)
             low_index=np.where(time==low_time)
-            time-=low_time
+            time-=low_time*np.ones(shape=N)
             t+=low_time
             low_rand_num=rng.random(size=len(low_index))
             if state[low_index]==1:
-                for (j,idx) in enumerate(low_index):
-                    time[idx]=np.divide(-np.log(low_rand_num[j]),fail[idx])
-                    state[idx]=0
+                time[low_index]=np.divide(-np.log(low_rand_num),fail[low_index])
+                state[low_index]=0
             else:
-                for (j,idx) in enumerate(low_index):
-                    time[idx]=np.divide(-np.log(low_rand_num[j]),success[idx])
-                    state[idx]=1    
+                time[low_index]=np.divide(-np.log(low_rand_num),success[low_index])
+                state[low_index]=1  
         k+=1
         t_total[i]=t
         t=0
