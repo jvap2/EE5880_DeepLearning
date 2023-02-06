@@ -223,34 +223,47 @@ def Gen_Res_V2(P_L,F_L,P_G,F_G):
     return P,F
 
 
-def Seq_MC(fail,success,load,N):
+def Seq_MC(fail,success,load,gen,N,maxCap):
     if len(fail)!=N or len(success)!=N:
         return
     MaxIter=100000
     k=0
     t=0
+    event=0
     t_total=np.empty(shape=MaxIter)
-    for i in range(MaxIter):
-        state=np.ones(N)
-        rng=np.random.default_rng(69)
-        rand_num=rng.random(size=N)
-        time=np.divide(-np.log(rand_num),fail)
-        while not np.all(state==0):
-            low_time=np.min(time)
-            low_index=np.where(time==low_time)
-            time-=low_time*np.ones(shape=N)
-            t+=low_time
-            if state[low_index]==1:
-                for (j,idx) in enumerate(low_index):
-                    time[idx]=np.divide(-np.log(low_rand_num[j]),fail[idx])
-                    state[idx]=0
-            else:
-                for (j,idx) in enumerate(low_index):
-                    time[idx]=np.divide(-np.log(low_rand_num[j]),success[idx])
-                    state[idx]=1    
-        k+=1
-        t_total[i]=t
-        t=0
+    state=np.ones(N)
+    rng=np.random.default_rng(69)
+    rand_num=rng.random(size=N)
+    time=np.divide(-np.log(rand_num),fail)
+    x=[]
+    y=[]
+    while True:
+        low_time=np.min(time)
+        low_index=np.where(time==low_time)
+        zero_index=np.where(state==0)
+        time-=low_time*np.ones(shape=N)
+        old_t=t
+        t+=low_time
+        current_load=load[old_t:t]
+        current_gen=maxCap-np.sum(gen[zero_index])
+        if current_load[old_t:t+1]>current_gen:
+            k+=1
+            failure_hours=np.where(current_load[old_t:t+1]>current_gen)
+            count+=len(failure_hours)#Record the number of failures
+            loss=current_load[old_t:t+1]-current_gen
+            loss_of_E=np.sum(loss[np.where(loss<0)])##adds up the total power lost when gen<load
+            x.append(old_t+failure_hours[0])
+            y.append(old_t+failure_hours[-1])
+        if state[low_index]==1:
+            for (j,idx) in enumerate(low_index):
+                low_rand_num=np.random.rand(len(low_index))
+                time[idx]=np.divide(-np.log(low_rand_num[j]),fail[idx])
+                state[idx]=0
+        else:
+            for (j,idx) in enumerate(low_index):
+                low_rand_num=np.random.rand(len(low_index))
+                time[idx]=np.divide(-np.log(low_rand_num[j]),success[idx])
+                state[idx]=1    
     t_mean=np.mean(t_total)
     f=k/sum(t_total)
     p=f/np.sum(success)
