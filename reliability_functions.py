@@ -235,6 +235,7 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
     rng=np.random.default_rng(69)
     rand_num=rng.random(size=N)
     time=np.floor(np.divide(-np.log(rand_num),fail))
+    np.int_(time)
     loss_of_E=0
     x=[]
     y=[]
@@ -247,9 +248,9 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
         time-=low_time*np.ones(shape=N)
         old_t=t
         t+=low_time
-        current_load=load[old_t:t+1]
+        current_load=load[int(old_t):int(t+1)]
         current_gen=maxCap-np.sum(gen[zero_index])
-        if current_load[old_t:t+1]>current_gen:
+        if current_load[int(old_t):int(t+1)].any()>current_gen:
             k+=1
             failure_hours=np.where(current_load[old_t:t+1]>current_gen)
             count+=len(failure_hours)#Record the number of failures
@@ -270,15 +271,17 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
             conv=math.sqrt(np.var(mdt))/math.sqrt(t)
             if abs(conv)<1e-4:
                 break
-        if state[low_index]==1:
+        if state[low_index].any()==1:
             for (j,idx) in enumerate(low_index):
                 low_rand_num=np.random.rand(len(low_index))
                 time[idx]=np.floor(np.divide(-np.log(low_rand_num[j]),fail[idx]))
+                np.int_(time[idx])
                 state[idx]=0
         else:
             for (j,idx) in enumerate(low_index):
                 low_rand_num=np.random.rand(len(low_index))
                 time[idx]=np.floor(np.divide(-np.log(low_rand_num[j]),success[idx]))
+                np.int_(time[idx])
                 state[idx]=1    
     t_mean=np.mean(t_total)
     f=k/sum(t_total)
