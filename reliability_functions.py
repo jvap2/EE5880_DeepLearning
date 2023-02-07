@@ -237,10 +237,16 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
     time=np.floor(np.divide(-np.log(rand_num),fail))
     np.int_(time)
     loss_of_E=0
+    count=0
+    event=0
     x=[]
     y=[]
+    x.append(0)
+    y.append(0)
     ff=[]
     mdt=[]
+    ff.append(0)
+    mdt.append(0)
     while True:
         low_time=np.min(time)
         low_index=np.where(time==low_time)
@@ -250,24 +256,24 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
         t+=low_time
         current_load=load[int(old_t):int(t+1)]
         current_gen=maxCap-np.sum(gen[zero_index])
-        if current_load.any()>current_gen:
+        if any(current_load>current_gen):
             k+=1
-            failure_hours=np.where(current_load[old_t:t+1]>current_gen)
+            failure_hours=np.where(current_load>current_gen)
             count+=len(failure_hours)#Record the number of failures
-            loss=current_load[old_t:t+1]-current_gen
+            loss=current_load-current_gen
             loss_of_E+=np.sum(loss[np.where(loss<0)])##adds up the total power lost when gen<load
             x.append(old_t+failure_hours[0])
             y.append(old_t+failure_hours[-1])
-            if x[k]!=y[k-1]:
+            if any(x[k]!=y[k-1]):
                 event+=1
-                ff[event]=event/t
-                mdt[event]=count/t
+                ff.append(event/t)
+                mdt.append(count/t)
             if(len(failure_hours)>1):
                 for i in range(len(failure_hours)-1):
                     if(failure_hours[i+1]-failure_hours[i]>1):
                         event+=1
-                        ff[event]=event/t
-                        mdt[event]=count/event
+                        ff.append(event/t)
+                        mdt.append(count/event)
             conv=math.sqrt(np.var(mdt))/math.sqrt(t)
             if abs(conv)<1e-4:
                 break
