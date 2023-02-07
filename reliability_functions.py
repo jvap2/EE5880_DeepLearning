@@ -234,7 +234,7 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
     state=np.ones(N)
     rng=np.random.default_rng(69)
     rand_num=rng.random(size=N)
-    time=np.divide(-np.log(rand_num),fail)
+    time=np.floor(np.divide(-np.log(rand_num),fail))
     loss_of_E=0
     x=[]
     y=[]
@@ -247,7 +247,7 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
         time-=low_time*np.ones(shape=N)
         old_t=t
         t+=low_time
-        current_load=load[old_t:t]
+        current_load=load[old_t:t+1]
         current_gen=maxCap-np.sum(gen[zero_index])
         if current_load[old_t:t+1]>current_gen:
             k+=1
@@ -273,15 +273,16 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
         if state[low_index]==1:
             for (j,idx) in enumerate(low_index):
                 low_rand_num=np.random.rand(len(low_index))
-                time[idx]=np.divide(-np.log(low_rand_num[j]),fail[idx])
+                time[idx]=np.floor(np.divide(-np.log(low_rand_num[j]),fail[idx]))
                 state[idx]=0
         else:
             for (j,idx) in enumerate(low_index):
                 low_rand_num=np.random.rand(len(low_index))
-                time[idx]=np.divide(-np.log(low_rand_num[j]),success[idx])
+                time[idx]=np.floor(np.divide(-np.log(low_rand_num[j]),success[idx]))
                 state[idx]=1    
     t_mean=np.mean(t_total)
     f=k/sum(t_total)
     p=f/np.sum(success)
+    print(t_mean,f,p)
     return t_mean,f,p
           
