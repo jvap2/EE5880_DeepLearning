@@ -1,6 +1,7 @@
 import numpy as np
 import math
 from math import floor
+import datetime
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     '''
@@ -226,27 +227,33 @@ def Gen_Res_V2(P_L,F_L,P_G,F_G):
 def Seq_MC(fail,success,N):
     if len(fail)!=N or len(success)!=N:
         return
-    MaxIter=1000000
+    MaxIter=10000
     k=0
     t=0
+    rng=np.random.default_rng(datetime.datetime.now().second)
+    seeds=rng.integers(low=0, high=MaxIter**2,size=MaxIter)
     t_total=np.empty(shape=MaxIter)
     for i in range(MaxIter):
         state=np.ones(N)
-        rng=np.random.default_rng(k)
+        rng=np.random.default_rng(seeds[i])
         rand_num=rng.random(size=N)
-        time=np.divide(-np.log(rand_num),fail)
-        while not np.all(state==0):
+        time=-np.log(rand_num)
+        time=np.divide(time,fail)
+        while np.any(state):
             low_time=np.min(time)
             low_index=np.where(time==low_time)
             time-=low_time*np.ones(shape=N)
             t+=low_time
-            low_rand_num=rng.random(size=len(low_index))
             if state[low_index]==1:
-                time[low_index]=np.divide(-np.log(low_rand_num),fail[low_index])
+                low_rand_num=np.random.random_sample(size=1)
+                time[low_index]=-math.log(low_rand_num)/fail[low_index]
                 state[low_index]=0
             else:
-                time[low_index]=np.divide(-np.log(low_rand_num),success[low_index])
-                state[low_index]=1  
+                low_rand_num=np.random.random_sample(size=1)
+                time[low_index]=-math.log(low_rand_num)/success[low_index]
+                state[low_index]=1
+            if not np.any(state):
+                t+=np.min(time)  
         k+=1
         t_total[i]=t
         t=0
