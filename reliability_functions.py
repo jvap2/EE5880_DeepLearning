@@ -224,36 +224,30 @@ def Gen_Res_V2(P_L,F_L,P_G,F_G):
     return P,F
 
 
-def Seq_MC(fail,success,N):
+def Seq_MC(fail,success,load,gen,N,maxCap):
     if len(fail)!=N or len(success)!=N:
         return
-    MaxIter=10000
+    MaxIter=1000000
     k=0
     t=0
-    rng=np.random.default_rng(datetime.datetime.now().second)
-    seeds=rng.integers(low=0, high=MaxIter**2,size=MaxIter)
     t_total=np.empty(shape=MaxIter)
     for i in range(MaxIter):
         state=np.ones(N)
-        rng=np.random.default_rng(seeds[i])
+        rng=np.random.default_rng(k)
         rand_num=rng.random(size=N)
-        time=-np.log(rand_num)
-        time=np.divide(time,fail)
-        while np.any(state):
+        time=np.divide(-np.log(rand_num),fail)
+        while not np.all(state==0):
             low_time=np.min(time)
             low_index=np.where(time==low_time)
             time-=low_time*np.ones(shape=N)
             t+=low_time
+            low_rand_num=rng.random(size=len(low_index))
             if state[low_index]==1:
-                low_rand_num=np.random.random_sample(size=1)
-                time[low_index]=-math.log(low_rand_num)/fail[low_index]
+                time[low_index]=np.divide(-np.log(low_rand_num),fail[low_index])
                 state[low_index]=0
             else:
-                low_rand_num=np.random.random_sample(size=1)
-                time[low_index]=-math.log(low_rand_num)/success[low_index]
-                state[low_index]=1
-            if not np.any(state):
-                t+=np.min(time)  
+                time[low_index]=np.divide(-np.log(low_rand_num),success[low_index])
+                state[low_index]=1  
         k+=1
         t_total[i]=t
         t=0
@@ -262,11 +256,3 @@ def Seq_MC(fail,success,N):
     p=f/np.sum(success)
     return t_mean,f,p
           
-
-fail=np.array([.01,.012])
-success=np.array([.125,1/6])
-N=2
-t,freq,prob=Seq_MC(fail,success,N)
-print(t)
-print(freq)
-print(prob)
