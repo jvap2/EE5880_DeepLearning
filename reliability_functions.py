@@ -227,71 +227,78 @@ def Gen_Res_V2(P_L,F_L,P_G,F_G):
 def Seq_MC(fail,success,load,gen,N,maxCap):
     if len(fail)!=N or len(success)!=N:
         return
-    MaxIter=1000000
-    k=0
-    t=0
-    t_total=np.empty(shape=MaxIter)
-    state=np.ones(N)
-    rng=np.random.default_rng(69)
-    rand_num=rng.random(size=N)
-    time=np.floor(np.divide(-np.log(rand_num),fail))
-    np.int_(time)
-    loss_of_E=0
-    count=0
-    event=0
-    x=[]
-    y=[]
-    x.append(0)
-    y.append(0)
-    ff=[]
-    mdt=[]
-    ff.append(0)
-    mdt.append(0)
-    while True:
-        low_time=np.min(time)
-        low_index=np.where(time==low_time)
-        zero_index=np.where(state==0)
-        time-=low_time*np.ones(shape=N)
-        old_t=t
-        t+=low_time
-        current_load=load[int(old_t):int(t+1)]
-        current_gen=maxCap-np.sum(gen[zero_index])
-        if any(current_load>current_gen):
-            k+=1
-            failure_hours=np.where(current_load>current_gen)
-            count+=len(failure_hours)#Record the number of failures
-            loss=current_load-current_gen
-            loss_of_E+=np.sum(loss[np.where(loss<0)])##adds up the total power lost when gen<load
-            x.append(old_t+failure_hours[0])
-            y.append(old_t+failure_hours[-1])
-            if any(x[k]!=y[k-1]):
-                event+=1
-                ff.append(event/t)
-                mdt.append(count/t)
-            if(len(failure_hours)>1):
-                for i in range(len(failure_hours)-1):
-                    if(failure_hours[i+1]-failure_hours[i]>1):
-                        event+=1
-                        ff.append(event/t)
-                        mdt.append(count/event)
-            conv=math.sqrt(np.var(mdt))/math.sqrt(t)
-            if abs(conv)<1e-4:
-                break
-        if state[low_index].any()==1:
-            for (j,idx) in enumerate(low_index):
-                low_rand_num=np.random.rand(len(low_index))
-                time[idx]=np.floor(np.divide(-np.log(low_rand_num[j]),fail[idx]))
-                np.int_(time[idx])
-                state[idx]=0
-        else:
-            for (j,idx) in enumerate(low_index):
-                low_rand_num=np.random.rand(len(low_index))
-                time[idx]=np.floor(np.divide(-np.log(low_rand_num[j]),success[idx]))
-                np.int_(time[idx])
-                state[idx]=1    
-    t_mean=np.mean(t_total)
-    f=k/sum(t_total)
-    p=f/np.sum(success)
-    print(t_mean,f,p)
-    return t_mean,f,p
+    MaxIter=10
+    mean_down=np.empty(shape=MaxIter)
+    f=np.empty(shape=MaxIter)
+    p=np.empty(shape=MaxIter)
+    for i in range(MaxIter):
+        k=0
+        t=0
+        state=np.ones(N)
+        rng=np.random.default_rng(69)
+        rand_num=rng.random(size=N)
+        time=np.floor(np.divide(-np.log(rand_num),fail))
+        np.int_(time)
+        loss_of_E=0
+        count=0
+        event=0
+        x=[]
+        y=[]
+        x.append(1)
+        y.append(1)
+        ff=[]
+        mdt=[]
+        ff.append(0)
+        mdt.append(0)
+        Check=True
+        while Check:
+            low_time=np.min(time)
+            low_index=np.where(time==low_time)
+            zero_index=np.where(state==0)
+            time-=low_time*np.ones(shape=N)
+            old_t=t
+            t+=low_time
+            current_load=load[int(old_t):int(t+1)]
+            current_gen=maxCap-np.sum(gen[zero_index])
+            if any(current_load>current_gen):
+                k+=1
+                failure_hours=np.where((current_load>current_gen))
+                count+=len(failure_hours)#Record the number of failures
+                loss=current_load-current_gen
+                loss_of_E+=np.sum(loss[np.where(loss<0)])##adds up the total power lost when gen<load
+                x.append(old_t+failure_hours[0][0])
+                y.append(old_t+failure_hours[0][-1])
+                if (x[k])!=y[k-1]:
+                    event+=1
+                    ff.append(event/t)
+                    mdt.append(count/t)
+                if(len(failure_hours[0])>1):
+                    for i in range(len(failure_hours)-1):
+                        if(failure_hours[i+1]-failure_hours[i]>1):
+                            event+=1
+                            ff.append(event/t)
+                            mdt.append(count/event)
+                conv=math.sqrt(np.var(mdt))/math.sqrt(t)
+                if abs(conv)<4e-2:
+                    Check=False
+            if state[low_index].any()==1:
+                for (j,idx) in enumerate(low_index):
+                    low_rand_num=np.random.rand(len(low_index))
+                    time[idx]=np.floor(np.divide(-np.log(low_rand_num[j]),fail[idx]))
+                    np.int_(time[idx])
+                    state[idx]=0
+            else:
+                for (j,idx) in enumerate(low_index):
+                    low_rand_num=np.random.rand(len(low_index))
+                    time[idx]=np.floor(np.divide(-np.log(low_rand_num[j]),success[idx]))
+                    np.int_(time[idx])
+                    state[idx]=1    
+        f[i]=ff[event]*8736
+        mean_down[i]=mdt[event]/8736
+        p[i]=f[i]*mean_down[i]
+    prob=np.mean(p)
+    freq=np.mean(f)
+    m_d_t=np.mean(mean_down)
+    HLOLE=prob*8736
+    return prob,freq,m_d_t,HLOLE
           

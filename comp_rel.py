@@ -39,4 +39,5 @@ Maintenance=data_np[:,4]
 # failure_rate=np.divide(np.ones(shape=np.shape(MTTF)),MTTF)
 # repair_rate=np.divide(np.ones(shape=np.shape(MTTR)),MTTR)
 '''in lines 17 and 18, we are finding the failure and repair rates by taking the inverse of MTTF an MTTR respectively'''
-Seq_MC(failure_rate,repair_rate,data_load,gen,total_units,3405)
+p,f,m,HLOLE=Seq_MC(failure_rate,repair_rate,data_load,gen,total_units,3405)
+print(f,m,p,HLOLE)
