@@ -1,6 +1,8 @@
 import numpy as np
 import math
 from math import floor
+from random import random
+from statistics import variance
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     '''
@@ -224,68 +226,61 @@ def Gen_Res_V2(P_L,F_L,P_G,F_G):
 
 
 def Seq_MC(fail,success,load,gen,N,maxCap):
-    if len(fail)!=N or len(success)!=N:
-        return
-    MaxIter=100000
-    k=0
-    t=0
-    event=0
-    t_total=np.empty(shape=MaxIter)
-    state=np.ones(N)
-    rng=np.random.default_rng(69)
-    rand_num=rng.random(size=N)
-    time=np.floor(np.divide(-np.log(rand_num),fail))
-    np.int_(time)
-    loss_of_E=0
-    x=[]
-    y=[]
-    ff=[]
-    mdt=[]
-    while True:
-        low_time=np.min(time)
-        low_index=np.where(time==low_time)
-        zero_index=np.where(state==0)
-        time-=low_time*np.ones(shape=N)
-        old_t=t
-        t+=low_time
-        current_load=load[int(old_t):int(t+1)]
-        current_gen=maxCap-np.sum(gen[zero_index])
-        if current_load[int(old_t):int(t+1)].any()>current_gen:
-            k+=1
-            failure_hours=np.where(current_load[old_t:t+1]>current_gen)
-            count+=len(failure_hours)#Record the number of failures
-            loss=current_load[old_t:t+1]-current_gen
-            loss_of_E+=np.sum(loss[np.where(loss<0)])##adds up the total power lost when gen<load
-            x.append(old_t+failure_hours[0])
-            y.append(old_t+failure_hours[-1])
-            if x[k]!=y[k-1]:
-                event+=1
-                ff[event]=event/t
-                mdt[event]=count/t
-            if(len(failure_hours)>1):
-                for i in range(len(failure_hours)-1):
-                    if(failure_hours[i+1]-failure_hours[i]>1):
-                        event+=1
-                        ff[event]=event/t
-                        mdt[event]=count/event
-            conv=math.sqrt(np.var(mdt))/math.sqrt(t)
-            if abs(conv)<1e-4:
-                break
-        if state[low_index].any()==1:
-            for (j,idx) in enumerate(low_index):
-                low_rand_num=np.random.rand(len(low_index))
-                time[idx]=np.floor(np.divide(-np.log(low_rand_num[j]),fail[idx]))
-                np.int_(time[idx])
-                state[idx]=0
-        else:
-            for (j,idx) in enumerate(low_index):
-                low_rand_num=np.random.rand(len(low_index))
-                time[idx]=np.floor(np.divide(-np.log(low_rand_num[j]),success[idx]))
-                np.int_(time[idx])
-                state[idx]=1    
-    t_mean=np.mean(t_total)
-    f=k/sum(t_total)
-    p=f/np.sum(success)
-    print(t_mean,f,p)
-    return t_mean,f,p
+    err_tol=10
+    LLD=[]
+    LLO=[]
+    ENS=[]
+    LOLE=[]
+    LOLF=[]
+    LOEE=[]
+    LLD_yr=0
+    LLO_yr=0
+    ENS_yr=0
+    check_down=0
+    N=0
+    while err_tol>1e-4:
+        N+=1
+        state=np.ones(shape=N)
+        rand_val=np.random.uniform(0,1,N)
+        time=np.divide(-np.log(rand_val),fail)
+        t_n=0
+        hr=0
+        while hr <8759:
+            T=np.min(time)
+            T_idx=np.where(time==np.min)
+            time=time-T
+            hr+=T
+            if hr>8759:
+                hr=8759
+            gen=maxCap-np.sum(gen[np.where(state==0)])
+            for time in range(t_n,hr):
+                if load[time]>=gen:
+                    if check_down==0:
+                        LLO_yr+=1
+                        check_down=1
+                    LLD_yr+=1
+                    ENS_yr+=(load[time]-gen)
+                else:
+                    check_down=0
+            t_n=hr
+            if state[T_idx]==0:
+                state[T_idx]=1
+                time[T_idx]=-np.log(random())/fail[T_idx]
+            else:
+                state[T_idx]=0
+                time[T_idx]=np.log(random())/success[T_idx]
+        LLD.append(LLD_yr)
+        LLO.append(LLO_yr)
+        ENS.append(ENS_yr)
+        LLD_yr,LLO_yr,ENS_yr=0,0,0
+        LOLE.append(sum(LLD)/(N))
+        LOLF.append(sum(LLO)/(N))
+        LOEE.append(sum(ENS)/(N))
+        err_tol=max(variance(LOLE),variance(LOLF),LOEE)
+    return LOLE[N-1],LOLF[N-1],LOEE[N-1]
+        
+            
+            
+
+
           
