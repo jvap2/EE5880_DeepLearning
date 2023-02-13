@@ -2,7 +2,7 @@ import numpy as np
 import math
 from math import floor
 from random import random
-from statistics import variance
+from statistics import variance, mean
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     '''
@@ -226,7 +226,7 @@ def Gen_Res_V2(P_L,F_L,P_G,F_G):
 
 
 def Seq_MC(fail,success,load,gen,N,maxCap):
-    err_tol=10
+    err_tol=1e10
     LLD=[]
     LLO=[]
     ENS=[]
@@ -237,47 +237,60 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
     LLO_yr=0
     ENS_yr=0
     check_down=0
-    N=0
-    while err_tol>1e-4:
-        N+=1
+    n=0
+    time=np.zeros(shape=N)
+    Cap=0
+    old_var=0
+    while err_tol>10 and n<100000:
+        n+=1
         state=np.ones(shape=N)
         rand_val=np.random.uniform(0,1,N)
-        time=np.divide(-np.log(rand_val),fail)
+        time=np.int_(np.floor(np.divide(-np.log(rand_val),fail)))
         t_n=0
         hr=0
         while hr <8759:
             T=np.min(time)
-            T_idx=np.where(time==np.min)
+            T_idx=np.where(time==T)
+            down_state_idx=np.where(state==0)
             time=time-T
             hr+=T
             if hr>8759:
                 hr=8759
-            gen=maxCap-np.sum(gen[np.where(state==0)])
-            for time in range(t_n,hr):
-                if load[time]>=gen:
+            Cap=maxCap-np.sum(gen[down_state_idx])
+            for t in range(t_n,hr+1):
+                if load[t]>=Cap:
                     if check_down==0:
                         LLO_yr+=1
                         check_down=1
                     LLD_yr+=1
-                    ENS_yr+=(load[time]-gen)
+                    ENS_yr+=abs(load[t]-Cap)
                 else:
                     check_down=0
             t_n=hr
-            if state[T_idx]==0:
-                state[T_idx]=1
-                time[T_idx]=-np.log(random())/fail[T_idx]
-            else:
-                state[T_idx]=0
-                time[T_idx]=np.log(random())/success[T_idx]
+            for idx in T_idx:
+                for value in idx:
+                    if state[value]==0:
+                        state[value]=1
+                        time[value]=np.int_(np.floor(-np.log(np.random.rand(1))/fail[value]))
+                    else:
+                        state[value]=0
+                        time[value]=np.int_(np.floor(-np.log(np.random.rand(1))/success[value]))
         LLD.append(LLD_yr)
         LLO.append(LLO_yr)
         ENS.append(ENS_yr)
         LLD_yr,LLO_yr,ENS_yr=0,0,0
-        LOLE.append(sum(LLD)/(N))
-        LOLF.append(sum(LLO)/(N))
-        LOEE.append(sum(ENS)/(N))
-        err_tol=max(variance(LOLE),variance(LOLF),LOEE)
-    return LOLE[N-1],LOLF[N-1],LOEE[N-1]
+        LOLE.append(mean(LLD))
+        LOLF.append(mean(LLO))
+        LOEE.append(mean(ENS))
+        mu_LOLE=np.mean(LOLE)
+        mu_LOLF=np.mean(LOLF)
+        mu_LOEE=np.mean(LOEE)
+        if n>1:
+            var=max(variance(LOEE),variance(LOLF),variance(LOEE))
+            err_tol=abs(var-old_var)
+        print(err_tol)
+        print(n)
+    return mu_LOLE,mu_LOLF,mu_LOEE
         
             
             
