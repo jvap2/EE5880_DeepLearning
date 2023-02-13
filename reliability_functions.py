@@ -227,7 +227,7 @@ def Gen_Res_V2(P_L,F_L,P_G,F_G):
 def Seq_MC(fail,success,load,gen,N,maxCap):
     if len(fail)!=N or len(success)!=N:
         return
-    MaxIter=10
+    MaxIter=30
     mean_down=np.empty(shape=MaxIter)
     f=np.empty(shape=MaxIter)
     p=np.empty(shape=MaxIter)
@@ -235,8 +235,7 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
         k=0
         t=0
         state=np.ones(N)
-        rng=np.random.default_rng(69)
-        rand_num=rng.random(size=N)
+        rand_num=np.random.uniform(size=N)
         time=np.floor(np.divide(-np.log(rand_num),fail))
         np.int_(time)
         loss_of_E=0
@@ -279,7 +278,7 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
                             ff.append(event/t)
                             mdt.append(count/event)
                 conv=math.sqrt(np.var(mdt))/math.sqrt(t)
-                if abs(conv)<4e-2:
+                if abs(conv)<4e-5:
                     Check=False
             if state[low_index].any()==1:
                 for (j,idx) in enumerate(low_index):
