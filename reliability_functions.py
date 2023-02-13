@@ -1,7 +1,8 @@
 import numpy as np
 import math
 from math import floor
-import datetime
+from random import random
+from statistics import variance, mean
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     '''
@@ -225,79 +226,74 @@ def Gen_Res_V2(P_L,F_L,P_G,F_G):
 
 
 def Seq_MC(fail,success,load,gen,N,maxCap):
-    if len(fail)!=N or len(success)!=N:
-        return
-    MaxIter=30
-    mean_down=np.empty(shape=MaxIter)
-    f=np.empty(shape=MaxIter)
-    p=np.empty(shape=MaxIter)
-    for i in range(MaxIter):
-        k=0
-        t=0
-        state=np.ones(N)
-        rand_num=np.random.uniform(size=N)
-        time=np.floor(np.divide(-np.log(rand_num),fail))
-        np.int_(time)
-        loss_of_E=0
-        count=0
-        event=0
-        x=[]
-        y=[]
-        x.append(1)
-        y.append(1)
-        ff=[]
-        mdt=[]
-        ff.append(0)
-        mdt.append(0)
-        Check=True
-        while Check:
-            low_time=np.min(time)
-            low_index=np.where(time==low_time)
-            zero_index=np.where(state==0)
-            time-=low_time*np.ones(shape=N)
-            old_t=t
-            t+=low_time
-            current_load=load[int(old_t):int(t+1)]
-            current_gen=maxCap-np.sum(gen[zero_index])
-            if any(current_load>current_gen):
-                k+=1
-                failure_hours=np.where((current_load>current_gen))
-                count+=len(failure_hours)#Record the number of failures
-                loss=current_load-current_gen
-                loss_of_E+=np.sum(loss[np.where(loss<0)])##adds up the total power lost when gen<load
-                x.append(old_t+failure_hours[0][0])
-                y.append(old_t+failure_hours[0][-1])
-                if (x[k])!=y[k-1]:
-                    event+=1
-                    ff.append(event/t)
-                    mdt.append(count/t)
-                if(len(failure_hours[0])>1):
-                    for i in range(len(failure_hours)-1):
-                        if(failure_hours[i+1]-failure_hours[i]>1):
-                            event+=1
-                            ff.append(event/t)
-                            mdt.append(count/event)
-                conv=math.sqrt(np.var(mdt))/math.sqrt(t)
-                if abs(conv)<4e-5:
-                    Check=False
-            if state[low_index].any()==1:
-                for (j,idx) in enumerate(low_index):
-                    low_rand_num=np.random.rand(len(low_index))
-                    time[idx]=np.floor(np.divide(-np.log(low_rand_num[j]),fail[idx]))
-                    np.int_(time[idx])
-                    state[idx]=0
-            else:
-                for (j,idx) in enumerate(low_index):
-                    low_rand_num=np.random.rand(len(low_index))
-                    time[idx]=np.floor(np.divide(-np.log(low_rand_num[j]),success[idx]))
-                    np.int_(time[idx])
-                    state[idx]=1    
-        f[i]=ff[event]*8736
-        mean_down[i]=mdt[event]/8736
-        p[i]=f[i]*mean_down[i]
-    prob=np.mean(p)
-    freq=np.mean(f)
-    m_d_t=np.mean(mean_down)
-    HLOLE=prob*8736
-    return prob,freq,m_d_t,HLOLE
+    err_tol=1e10
+    LLD=[]
+    LLO=[]
+    ENS=[]
+    LOLE=[]
+    LOLF=[]
+    LOEE=[]
+    LLD_yr=0
+    LLO_yr=0
+    ENS_yr=0
+    check_down=0
+    n=0
+    time=np.zeros(shape=N)
+    Cap=0
+    old_var=0
+    while err_tol>10 and n<100000:
+        n+=1
+        state=np.ones(shape=N)
+        rand_val=np.random.uniform(0,1,N)
+        time=np.int_(np.floor(np.divide(-np.log(rand_val),fail)))
+        t_n=0
+        hr=0
+        while hr <8759:
+            T=np.min(time)
+            T_idx=np.where(time==T)
+            down_state_idx=np.where(state==0)
+            time=time-T
+            hr+=T
+            if hr>8759:
+                hr=8759
+            Cap=maxCap-np.sum(gen[down_state_idx])
+            for t in range(t_n,hr+1):
+                if load[t]>=Cap:
+                    if check_down==0:
+                        LLO_yr+=1
+                        check_down=1
+                    LLD_yr+=1
+                    ENS_yr+=abs(load[t]-Cap)
+                else:
+                    check_down=0
+            t_n=hr
+            for idx in T_idx:
+                for value in idx:
+                    if state[value]==0:
+                        state[value]=1
+                        time[value]=np.int_(np.floor(-np.log(np.random.rand(1))/fail[value]))
+                    else:
+                        state[value]=0
+                        time[value]=np.int_(np.floor(-np.log(np.random.rand(1))/success[value]))
+        LLD.append(LLD_yr)
+        LLO.append(LLO_yr)
+        ENS.append(ENS_yr)
+        LLD_yr,LLO_yr,ENS_yr=0,0,0
+        LOLE.append(mean(LLD))
+        LOLF.append(mean(LLO))
+        LOEE.append(mean(ENS))
+        mu_LOLE=np.mean(LOLE)
+        mu_LOLF=np.mean(LOLF)
+        mu_LOEE=np.mean(LOEE)
+        if n>1:
+            var=max(variance(LOEE),variance(LOLF),variance(LOEE))
+            err_tol=abs(var-old_var)
+        print(err_tol)
+        print(n)
+    return mu_LOLE,mu_LOLF,mu_LOEE
+        
+            
+            
+
+
           
