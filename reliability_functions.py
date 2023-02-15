@@ -241,7 +241,7 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
     time=np.zeros(shape=N)
     Cap=0
     old_var=0
-    while err_tol>10 and n<100000:
+    while err_tol>100 and n<20000:
         n+=1
         state=np.ones(shape=N)
         rand_val=np.random.uniform(0,1,N)
@@ -257,7 +257,7 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
             if hr>8759:
                 hr=8759
             Cap=maxCap-np.sum(gen[down_state_idx])
-            for t in range(t_n,hr+1):
+            for t in range(t_n,hr):
                 if load[t]>=Cap:
                     if check_down==0:
                         LLO_yr+=1
