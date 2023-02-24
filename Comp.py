@@ -31,5 +31,8 @@ print(A)
 PD=pd.read_csv("Bus_Load_Data_RTS.csv")
 PG=pd.read_csv("Generating_Units.csv")
 
-print(PD.head())
-print(PG.head())
+
+PD_dict=PD.to_dict()
+PG_dict=PG.to_dict()
+
+print(PG_dict)
