@@ -12,9 +12,12 @@ length=df['Length(miles)']
 admit=1/r_pu
 
 Y=np.zeros(shape=(max(col),max(col)))
+W=np.zeros(shape=(max(col),max(col)))
 for i,(r,c) in enumerate(zip(row,col)):
     Y[r-1,c-1]-=admit[i]
     Y[c-1,r-1]-=admit[i]
+    W[r-1,c-1]=1/length[i]
+    W[c-1,r-1]=1/length[i]
 
 
 for i,q in enumerate(Y):
