@@ -27,3 +27,9 @@ for i,(r,c) in enumerate(zip(row,col)):
     A[i,:]=(Z[r-1,:]-Z[c-1,:])/x_pu[i]
 
 print(A)
+
+PD=pd.read_csv("Bus_Load_Data_RTS.csv")
+PG=pd.read_csv("Generating_Units.csv")
+
+print(PD.head())
+print(PG.head())
