@@ -8,6 +8,7 @@ row=df['From'].to_numpy(dtype=np.int64)
 col=df['To'].to_numpy(dtype=np.int64)
 r_pu=df['R(pu)'].to_numpy()
 x_pu=df['X(pu)'].to_numpy()
+length=df['Length(miles)']
 admit=1/r_pu
 
 Y=np.zeros(shape=(max(col),max(col)))
@@ -32,7 +33,13 @@ PD=pd.read_csv("Bus_Load_Data_RTS.csv")
 PG=pd.read_csv("Generating_Units.csv")
 
 
-PD_dict=PD.to_dict()
-PG_dict=PG.to_dict()
+Load_Buses=PD['Bus'].to_numpy()
+Loads=PD['MW'].to_numpy()
+Gen_Buses=PG['Bus'].to_numpy()
+Gen_Units_MW=np.transpose(np.array([PG['Unit 1'].to_numpy(),
+                       PG['Unit 2'].to_numpy(),
+                       PG['Unit 3'].to_numpy(),
+                       PG['Unit 4'].to_numpy(),
+                       PG['Unit 5'].to_numpy(),
+                       PG['Unit 6'].to_numpy()]))
 
-print(PG_dict)
