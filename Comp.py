@@ -8,7 +8,8 @@ row=df['From'].to_numpy(dtype=np.int64)
 col=df['To'].to_numpy(dtype=np.int64)
 r_pu=df['R(pu)'].to_numpy()
 x_pu=df['X(pu)'].to_numpy()
-length=df['Length(miles)']
+length=df['Length(miles)'].to_numpy()
+length=(length-np.min(length))/(np.max(length)-np.min(length))
 admit=1/r_pu
 
 Y=np.zeros(shape=(max(col),max(col)))
@@ -16,8 +17,8 @@ W=np.zeros(shape=(max(col),max(col)))
 for i,(r,c) in enumerate(zip(row,col)):
     Y[r-1,c-1]-=admit[i]
     Y[c-1,r-1]-=admit[i]
-    W[r-1,c-1]=1/length[i]
-    W[c-1,r-1]=1/length[i]
+    W[r-1,c-1]=length[i]
+    W[c-1,r-1]=length[i]
 
 
 for i,q in enumerate(Y):
