@@ -370,4 +370,35 @@ def Seq_MC_Comp(fail,success,load,gen,N,maxCap,A,T,T_max,Beta,alpha,W,Load_Buses
 
 
 def PSO_rel(A,T,T_max,Gen_Data,Load_Data,C,alpha,beta,W):
-    pass  
+    '''
+    1.) Swarm parameters such as weighting factor,
+    acceleration constants and swarm size (S) are entered.
+    2.)Initially particles are randomly generated whose
+    vector dimensions will be equal swarm size.
+    3.)Now, at each particle Cij is calculated considering
+    all network constraints and it represents the initial
+    random position of Pbest.
+    4.)The particle which formulates the minimum Cij
+    value will represent initial Gbest.
+    5.)Velocity (Vx) and position (Xx) of each particle x in the
+    swarm S is updated by,
+        w=((wmax-wmin)/itermax)*iter
+        w= inertia weight
+        wmax and min are the respective maximum and minimum inertia weights
+        itermax is the maximum number of iterations
+    Vx(k+1)=w*Vx(k)+c1r1(Pbest_x(k)-X_x(k))+c2r2(Gbest(k)-X_x(k))
+        c1 and c2 are the acceleration constants
+        r1 and r2 are random numbers between [0,1]
+        Pbest_x is the best objective function value for particle x at iteration k
+        Gbest(k) is the best objective value among all particles
+    Xx(k+1)=Xx(k)+Vx(k+1)
+    6.) iter <- iter + 1
+    7.) Objective function is calculated for all constraints (see Canadian dood paper)
+    8.) Update Pbest and Gbest
+    9.) Repeat until convergence
+    '''
+    w=.1
+    c_1=1
+    c_2=1
+    r_1,r_2=np.random.random(size=1), np.random.random(size=1)
+    
