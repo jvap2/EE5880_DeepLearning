@@ -3,7 +3,7 @@ import math
 from math import floor
 from random import random
 from statistics import variance, mean
-
+import pyswarms
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     '''
     Input Parameters
@@ -309,6 +309,7 @@ def Seq_MC_Comp(fail,success,load,gen,N,maxCap,A,T,T_max,Beta,alpha,W,Load_Buses
     time=np.zeros(shape=N)
     Cap=0
     old_var=0
+    Curt=np.empty(shape=(len(Load_Buses),3))
     while err_tol>100 and n<20000:
         n+=1
         state=np.ones(shape=N)
@@ -326,6 +327,7 @@ def Seq_MC_Comp(fail,success,load,gen,N,maxCap,A,T,T_max,Beta,alpha,W,Load_Buses
                 hr=8759
             Cap=maxCap-np.sum(gen[down_state_idx])
             for t in range(t_n,hr):
+
                 if load[t]>=Cap:
                     if check_down==0:
                         LLO_yr+=1

@@ -61,7 +61,46 @@ print(beta)
 
 ##Test
 T=np.empty(shape=(L,1))
-for i,row in enumerate(T):
-    PG_sum=np.sum(Gen_Units_MW)-np.sum(Loads)
-    row=np.sum(A[i,:])*PG_sum
-    T[i]=row
+# for i,row in enumerate(T):
+#     PG_sum=np.sum(Gen_Units_MW)-np.sum(Loads)
+#     row=np.sum(A[i,:])*PG_sum
+#     T[i]=row
+data_df=pd.read_csv("load_csv_data.csv")
+rows=len(data_df.axes[0])
+cols=len(data_df.axes[1])
+data_load=np.empty(shape=rows*cols)
+for r in range(rows):
+    for c in range(cols):
+        data_load[r*cols+c]=data_df.iloc[r,c]*2850
+
+data=pd.read_csv("Gen_Reliability.csv")
+data_np=data.to_numpy()
+size=data_np[:,0]
+units=data_np[:,1]
+total_units=np.sum(units)
+print(total_units)
+# gen=np.empty(shape=total_units)
+i=0
+j=0
+MTTF=data_np[:,2]
+MTTR=data_np[:,3]
+failure_rate={}
+repair_rate={}
+
+for u_size, u in zip(size, units):
+    gen=u_size
+    failure_rate[gen]=1/MTTF[j]
+    repair_rate[gen]=1/MTTR[j]
+    i+=u
+    j+=1
+
+Gen={}
+print(Gen_Buses)
+for i,bus in enumerate(Gen_Buses):
+    Gen[bus]=[]
+    for j,row in enumerate(Gen_Units_MW[i]):
+        if row!=0:
+            print(row)
+            Gen[bus].append([row,failure_rate[row],repair_rate[row]])
+
+print(Gen)
