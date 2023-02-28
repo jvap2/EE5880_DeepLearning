@@ -401,4 +401,18 @@ def PSO_rel(A,T,T_max,Gen_Data,Load_Data,C,alpha,beta,W):
     c_1=1
     c_2=1
     r_1,r_2=np.random.random(size=1), np.random.random(size=1)
+    Swarm_Size=200
+    Particles=np.random.random(size=Swarm_Size)
+    P_best_standard=Load_Data
+    '''We need to realize the load at each bus, hence this will be the best value'''
+    '''This is our objective function'''
+    T= lambda A_s, PG, C, PD: np.matmul(A,(PG+C-PD))
+    pd= lambda PG, C: sum(PG)+sum(C)
+    max_iter = 200
     
+
+
+def Constraints(Pd,Pg, Pl, A, Weight, T_max,i):
+    C=Weight*(Pd[i]*(sum(Pg)-sum(Pd)-Pl))/sum(Pd)
+    T_i=np.dot(A[i,:],(Pg+C-Pd))
+    if T_i<T_max and sum(Pg)+sum(C)-sum(Pd)==0:
