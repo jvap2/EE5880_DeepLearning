@@ -31,7 +31,6 @@ A=np.zeros(shape=(len(admit),max(col)))
 for i,(r,c) in enumerate(zip(row,col)):
     A[i,:]=(Z[r-1,:]-Z[c-1,:])/x_pu[i]
 
-print(A)
 
 PD=pd.read_csv("Bus_Load_Data_RTS.csv")
 PG=pd.read_csv("Generating_Units.csv")
@@ -46,4 +45,14 @@ Gen_Units_MW=np.transpose(np.array([PG['Unit 1'].to_numpy(),
                        PG['Unit 4'].to_numpy(),
                        PG['Unit 5'].to_numpy(),
                        PG['Unit 6'].to_numpy()]))
+
+NC=len(Load_Buses)
+alpha=np.empty(shape=(NC,3))
+beta=np.empty(shape=(NC,3))
+for i,row in enumerate(alpha):
+    row=np.random.random(size=(1,3))
+    row/=np.sum(row)
+    alpha[i,:]=row
+    beta[i,:]=row*Loads[i]
+print(beta)
 
