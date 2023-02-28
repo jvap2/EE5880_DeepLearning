@@ -25,8 +25,10 @@ for i,q in enumerate(Y):
     Y[i,i]=-sum(q)
 
 Z=inv(Y)
+L=len(admit)
+NS=max(col)
 
-A=np.zeros(shape=(len(admit),max(col)))
+A=np.zeros(shape=(L,NS))
 
 for i,(r,c) in enumerate(zip(row,col)):
     A[i,:]=(Z[r-1,:]-Z[c-1,:])/x_pu[i]
@@ -46,4 +48,8 @@ Gen_Units_MW=np.transpose(np.array([PG['Unit 1'].to_numpy(),
                        PG['Unit 4'].to_numpy(),
                        PG['Unit 5'].to_numpy(),
                        PG['Unit 6'].to_numpy()]))
+
+
+
+
 
