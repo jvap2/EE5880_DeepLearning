@@ -4,6 +4,7 @@ from math import floor
 from random import random
 from statistics import variance, mean
 import pyswarms
+import pandas as pd
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     '''
