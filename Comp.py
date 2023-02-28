@@ -9,6 +9,7 @@ col=df['To'].to_numpy(dtype=np.int64)
 r_pu=df['R(pu)'].to_numpy()
 x_pu=df['X(pu)'].to_numpy()
 length=df['Length(miles)'].to_numpy()
+T_max=df['Rating'].to_numpy()
 length=(length-np.min(length))/(np.max(length)-np.min(length))
 admit=1/r_pu
 
