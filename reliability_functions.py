@@ -316,17 +316,17 @@ def Seq_MC_Comp(fail,success,load,gen,N,maxCap,A,T,T_max,Beta,alpha,W,Load_Buses
         state=np.ones(shape=N)
         rand_val=np.random.uniform(0,1,N)
         count=0
-        for i in Gen_data.keys():
-            for lst in Gen_data[i]:
-                Gen_data[i][lst][3]=int(-np.log(rand_val[count])/Gen_data[i][lst][1])
+        for i in range(Gen_data.shape[0]):
+            Gen_data.iloc[i,5]=int(-np.log(rand_val[count])/Gen_data.iloc[i,2])
         t_n=0
         hr=0
         while hr <8759:
-            T=np.min(Gen_data[:][:][3])
-            Gen_data[:][:][3]-=T
-            T_idx_bus=np.where(Gen_data[:][:][3]==T)
-            down_state_idx=np.where(state==0)
-            time=time-T
+            T=Gen_data.iloc[:,5].min()
+            T_idx_bus=Gen_data[Gen_data.iloc[:,5]==T].tolist()
+            down_state_idx=Gen_data[Gen_data.iloc[:,4]==0].tolist()
+            Bus_Curt=Gen_data.iloc[T_idx_bus,0]
+            Power_Down=Gen_data[T_idx_bus]["Cap"]
+            Gen_data.iloc[:,5]=Gen_data.iloc[:,5]-T
             hr+=T
             if hr>8759:
                 hr=8759
@@ -345,11 +345,11 @@ def Seq_MC_Comp(fail,success,load,gen,N,maxCap,A,T,T_max,Beta,alpha,W,Load_Buses
             for idx in T_idx_bus:
                 for value in idx:
                     if state[value]==0:
-                        state[value]=1
-                        time[value]=np.int_(np.floor(-np.log(np.random.rand(1))/fail[value]))
+                        Gen_data[value]["State"]=1
+                        Gen_data[value]["State Time"]=np.int_(np.floor(-np.log(np.random.rand(1))/Gen_data[value]["Failure Rate"]))
                     else:
-                        state[value]=0
-                        time[value]=np.int_(np.floor(-np.log(np.random.rand(1))/success[value]))
+                        Gen_data[value]["State"]=0
+                        Gen_data[value]["State Time"]=np.int_(np.floor(-np.log(np.random.rand(1))/Gen_data[value]["Success Rate"]))
         LLD.append(LLD_yr)
         LLO.append(LLO_yr)
         ENS.append(ENS_yr)

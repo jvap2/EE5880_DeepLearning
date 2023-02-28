@@ -97,8 +97,8 @@ Gen=[]
 for i,bus in enumerate(Gen_Buses):
     for j,row in enumerate(Gen_Units_MW[i]):
         if row!=0:
-            Gen.append({"Bus": bus,"Cap":row,"Failure Rate":failure_rate[row],"Repair Rate":repair_rate[row],"State Time":0})
+            Gen.append({"Bus": bus,"Cap":row,"Failure Rate":failure_rate[row],"Repair Rate":repair_rate[row],"State":1,"State Time":0})
 
 
 Gen_df=pd.DataFrame(Gen)
-print(Gen_df.head())
+print(Gen_df[:]["Cap"])
