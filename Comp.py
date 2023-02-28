@@ -78,7 +78,6 @@ data_np=data.to_numpy()
 size=data_np[:,0]
 units=data_np[:,1]
 total_units=np.sum(units)
-print(total_units)
 # gen=np.empty(shape=total_units)
 i=0
 j=0
@@ -94,13 +93,12 @@ for u_size, u in zip(size, units):
     i+=u
     j+=1
 
-Gen={}
-print(Gen_Buses)
+Gen=[]
 for i,bus in enumerate(Gen_Buses):
-    Gen[bus]=[]
     for j,row in enumerate(Gen_Units_MW[i]):
         if row!=0:
-            print(row)
-            Gen[bus].append([row,failure_rate[row],repair_rate[row]])
+            Gen.append({"Bus": bus,"Cap":row,"Failure Rate":failure_rate[row],"Repair Rate":repair_rate[row],"State Time":0})
 
-print(Gen)
+
+Gen_df=pd.DataFrame(Gen)
+print(Gen_df.head())

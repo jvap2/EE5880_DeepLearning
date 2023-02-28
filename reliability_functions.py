@@ -4,6 +4,7 @@ from math import floor
 from random import random
 from statistics import variance, mean
 import pyswarms
+
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     '''
     Input Parameters
@@ -293,7 +294,7 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
     return mu_LOLE,mu_LOLF,mu_LOEE
         
             
-def Seq_MC_Comp(fail,success,load,gen,N,maxCap,A,T,T_max,Beta,alpha,W,Load_Buses,Loads,Gen_Buses,Gen_Units):
+def Seq_MC_Comp(fail,success,load,gen,N,maxCap,A,T,T_max,Beta,alpha,W,Load_Buses,Loads,Gen_data):
     err_tol=1e10
     LLD=[]
     LLO=[]
@@ -314,12 +315,16 @@ def Seq_MC_Comp(fail,success,load,gen,N,maxCap,A,T,T_max,Beta,alpha,W,Load_Buses
         n+=1
         state=np.ones(shape=N)
         rand_val=np.random.uniform(0,1,N)
-        time=np.int_(np.floor(np.divide(-np.log(rand_val),fail)))
+        count=0
+        for i in Gen_data.keys():
+            for lst in Gen_data[i]:
+                Gen_data[i][lst][3]=int(-np.log(rand_val[count])/Gen_data[i][lst][1])
         t_n=0
         hr=0
         while hr <8759:
-            T=np.min(time)
-            T_idx=np.where(time==T)
+            T=np.min(Gen_data[:][:][3])
+            Gen_data[:][:][3]-=T
+            T_idx_bus=np.where(Gen_data[:][:][3]==T)
             down_state_idx=np.where(state==0)
             time=time-T
             hr+=T
@@ -337,7 +342,7 @@ def Seq_MC_Comp(fail,success,load,gen,N,maxCap,A,T,T_max,Beta,alpha,W,Load_Buses
                 else:
                     check_down=0
             t_n=hr
-            for idx in T_idx:
+            for idx in T_idx_bus:
                 for value in idx:
                     if state[value]==0:
                         state[value]=1
