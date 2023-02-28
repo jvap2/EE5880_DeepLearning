@@ -333,7 +333,6 @@ def Seq_MC_Comp(fail,success,load,gen,N,maxCap,A,T,T_max,Beta,alpha,W,Load_Buses
                 hr=8759
             Cap=maxCap-np.sum(gen[down_state_idx])
             for t in range(t_n,hr):
-
                 if load[t]>=Cap:
                     if check_down==0:
                         LLO_yr+=1
@@ -341,6 +340,7 @@ def Seq_MC_Comp(fail,success,load,gen,N,maxCap,A,T,T_max,Beta,alpha,W,Load_Buses
                     LLD_yr+=1
                     ENS_yr+=abs(load[t]-Cap)
                 else:
+                    ## G_2 or G_1
                     check_down=0
             t_n=hr
             for idx in T_idx_bus:
@@ -369,4 +369,5 @@ def Seq_MC_Comp(fail,success,load,gen,N,maxCap,A,T,T_max,Beta,alpha,W,Load_Buses
     return mu_LOLE,mu_LOLF,mu_LOEE
 
 
-          
+def PSO_rel(A,T,T_max,Gen_Data,Load_Data,C,alpha,beta,W):
+    pass  
