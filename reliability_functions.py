@@ -293,7 +293,72 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
     return mu_LOLE,mu_LOLF,mu_LOEE
         
             
-            
+def Seq_MC_Comp(fail,success,load,gen,N,maxCap,A,T,T_max,Beta,alpha,W,Load_Buses,Loads,Gen_Buses,Gen_Units):
+    err_tol=1e10
+    LLD=[]
+    LLO=[]
+    ENS=[]
+    LOLE=[]
+    LOLF=[]
+    LOEE=[]
+    LLD_yr=0
+    LLO_yr=0
+    ENS_yr=0
+    check_down=0
+    n=0
+    time=np.zeros(shape=N)
+    Cap=0
+    old_var=0
+    while err_tol>100 and n<20000:
+        n+=1
+        state=np.ones(shape=N)
+        rand_val=np.random.uniform(0,1,N)
+        time=np.int_(np.floor(np.divide(-np.log(rand_val),fail)))
+        t_n=0
+        hr=0
+        while hr <8759:
+            T=np.min(time)
+            T_idx=np.where(time==T)
+            down_state_idx=np.where(state==0)
+            time=time-T
+            hr+=T
+            if hr>8759:
+                hr=8759
+            Cap=maxCap-np.sum(gen[down_state_idx])
+            for t in range(t_n,hr):
+                if load[t]>=Cap:
+                    if check_down==0:
+                        LLO_yr+=1
+                        check_down=1
+                    LLD_yr+=1
+                    ENS_yr+=abs(load[t]-Cap)
+                else:
+                    check_down=0
+            t_n=hr
+            for idx in T_idx:
+                for value in idx:
+                    if state[value]==0:
+                        state[value]=1
+                        time[value]=np.int_(np.floor(-np.log(np.random.rand(1))/fail[value]))
+                    else:
+                        state[value]=0
+                        time[value]=np.int_(np.floor(-np.log(np.random.rand(1))/success[value]))
+        LLD.append(LLD_yr)
+        LLO.append(LLO_yr)
+        ENS.append(ENS_yr)
+        LLD_yr,LLO_yr,ENS_yr=0,0,0
+        LOLE.append(mean(LLD))
+        LOLF.append(mean(LLO))
+        LOEE.append(mean(ENS))
+        mu_LOLE=np.mean(LOLE)
+        mu_LOLF=np.mean(LOLF)
+        mu_LOEE=np.mean(LOEE)
+        if n>1:
+            var=max(variance(LOEE),variance(LOLF),variance(LOEE))
+            err_tol=abs(var-old_var)
+        print(err_tol)
+        print(n)
+    return mu_LOLE,mu_LOLF,mu_LOEE
 
 
           

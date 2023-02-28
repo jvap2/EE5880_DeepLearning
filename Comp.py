@@ -59,3 +59,9 @@ for i,row in enumerate(alpha):
     beta[i,:]=row*Loads[i]
 print(beta)
 
+##Test
+T=np.empty(shape=(L,1))
+for i,row in enumerate(T):
+    PG_sum=np.sum(Gen_Units_MW)-np.sum(Loads)
+    row=np.sum(A[i,:])*PG_sum
+    T[i]=row
