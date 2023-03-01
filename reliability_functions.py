@@ -325,18 +325,18 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
         Pg=Gen_data.copy()
         Temp_Load=np.copy(Load_Data)
         while hr <8759:
-            T=Gen_data.iloc[:,5].min()
-            T_idx_bus=Gen_data[Gen_data.iloc[:,5]==T].tolist()
-            down_state_idx=Gen_data[Gen_data.iloc[:,4]==0].tolist()
+            time=Gen_data.iloc[:,5].min()
+            T_idx_bus=Gen_data.index[Gen_data.iloc[:,5]==time].tolist()
+            down_state_idx=Gen_data.index[Gen_data.iloc[:,4]==0].tolist()
             Bus_Curt=Gen_data.iloc[down_state_idx,0]
-            Power_Down=Gen_data[down_state_idx]["Cap"]
-            Gen_data.iloc[:,5]=Gen_data.iloc[:,5]-T
-            hr+=T
+            Power_Down=Gen_data.loc[down_state_idx,'Cap']
+            Gen_data.iloc[:,5]=Gen_data.iloc[:,5]-time
+            hr+=time
             if hr>8759:
                 hr=8759
             Cap=maxCap-Power_Down
             for t in range(t_n,hr):
-                C=PSO_rel(A,T,T_max,Gen_data.iloc[:,1],load[t],Curt,W,Power_Down,alpha=0,beta=0)
+                C=PSO_rel(A,T,T_max,Gen_data.iloc[:,1],load[t],Load_Data,Curt,W,Power_Down,alpha=0,beta=0)
                 Temp_Load-=C
                 if load[t]>=np.sum(Temp_Load):
                     if check_down==0:
@@ -351,13 +351,13 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
             for idx in T_idx_bus:
                 for value in idx:
                     if state[value]==0:
-                        Gen_data[value]["State"]=1
-                        Gen_data[value]["State Time"]=np.int_(np.floor(-np.log(np.random.rand(1))/Gen_data[value]["Failure Rate"]))
-                        Gen_data[value]["Cap"]=Pg[value]["Cap"]
+                        Gen_data.loc[value,'State']=1
+                        Gen_data.loc[value,'State Time']=np.int_(np.floor(-np.log(np.random.rand(1))/Gen_data.loc[value,'Failure Rate']))
+                        Gen_data.loc[value,'Cap']=Pg.loc[value,'Cap']
                     else:
-                        Gen_data[value]["State"]=0
-                        Gen_data[value]["State Time"]=np.int_(np.floor(-np.log(np.random.rand(1))/Gen_data[value]["Success Rate"]))
-                        Gen_data[value]["Cap"]=0
+                        Gen_data.loc[value,'State']=0
+                        Gen_data.loc[value,'State Time']=np.int_(np.floor(-np.log(np.random.rand(1))/Gen_data.loc[value,'Success Rate']))
+                        Gen_data.loc[value,'Cap']=0
         LLD.append(LLD_yr)
         LLO.append(LLO_yr)
         ENS.append(ENS_yr)
@@ -376,7 +376,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     return mu_LOLE,mu_LOLF,mu_LOEE
 
 
-def PSO_rel(A,T,T_max,Gen_Data,Load_Data,C,W,Pl,alpha=0,beta=0):
+def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Data,C,W,Pl,alpha=0,beta=0):
     '''
     1.) Swarm parameters such as weighting factor,
     acceleration constants and swarm size (S) are entered.
@@ -407,15 +407,16 @@ def PSO_rel(A,T,T_max,Gen_Data,Load_Data,C,W,Pl,alpha=0,beta=0):
     '''We need to realize the load at each bus, hence this will be the best value'''
     '''This is our objective function'''
     max_iter = 200
-    for i in range(len(Load_Data)):
-        C[i]=differential_evolution(Constraints, args=(T[i],Load_Data,Gen_Data,Pl,A[i,:],W,T_max[i],i))
+    L=np.shape(Load_Data)
+    for i in range(L[0]):
+        C[i]=differential_evolution(Constraints,bounds=(0,Load_Data[i]),args=(T[i],Load,Load_Data,Gen_Data,Pl,A[i,:],W,T_max[i],i))
     
 
 
-def Constraints(C,T,Pd,Pg, Pl, A, Weight, T_max,i):
+def Constraints(C,T,Load,Pd,Pg, Pl, A, Weight, T_max,i):
     C=Weight[i]*(Pd[i]*(sum(Pg)-sum(Pd)-Pl))/sum(Pd)
     T=np.dot(A[i,:],(Pg+C-Pd))
-    if T<T_max and sum(Pg)+sum(C)-sum(Pd)==0 and sum(Pg)<3405:
+    if T<T_max and sum(Pg)+sum(C)-sum(Pd)==0 and sum(Pg)<3405 and sum(Pd)>=Load:
         return C
     else:
         return np.ones(shape=np.shape(C))*1e6
