@@ -5,6 +5,7 @@ from random import random
 from statistics import variance, mean
 import pyswarms
 import pandas as pd
+from scipy.optimize import differential_evolution
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     '''
@@ -397,22 +398,19 @@ def PSO_rel(A,T,T_max,Gen_Data,Load_Data,C,alpha,beta,W):
     8.) Update Pbest and Gbest
     9.) Repeat until convergence
     '''
-    w=.1
-    c_1=1
-    c_2=1
-    r_1,r_2=np.random.random(size=1), np.random.random(size=1)
-    Swarm_Size=200
-    Particles=np.random.random(size=Swarm_Size)
-    P_best_standard=Load_Data
     '''We need to realize the load at each bus, hence this will be the best value'''
     '''This is our objective function'''
-    T= lambda A_s, PG, C, PD: np.matmul(A,(PG+C-PD))
-    pd= lambda PG, C: sum(PG)+sum(C)
     max_iter = 200
+    result=np.empty(shape=(len(Load_Data)))
+    for i in range(len(Load_Data)):
+        result[i]=differential_evolution(Constraints, args=(T[i],Load_Data,Gen_Data,A[i,:],W,T_max[i],i))
     
 
 
-def Constraints(Pd,Pg, Pl, A, Weight, T_max,i):
-    C=Weight*(Pd[i]*(sum(Pg)-sum(Pd)-Pl))/sum(Pd)
-    T_i=np.dot(A[i,:],(Pg+C-Pd))
-    if T_i<T_max and sum(Pg)+sum(C)-sum(Pd)==0:
+def Constraints(C,T,Pd,Pg, Pl, A, Weight, T_max,i):
+    C=Weight[i]*(Pd[i]*(sum(Pg)-sum(Pd)-Pl))/sum(Pd)
+    T=np.dot(A[i,:],(Pg+C-Pd))
+    if T<T_max and sum(Pg)+sum(C)-sum(Pd)==0:
+        return C
+    else:
+        return np.ones(shape=np.shape(C))*1e6
