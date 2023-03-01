@@ -104,3 +104,6 @@ for i,bus in enumerate(Gen_Buses):
 Gen_df=pd.DataFrame(Gen)
 
 LOLE,LOLF,LOEE=Seq_MC_Comp(data_load,gen,total_units,3405,A,T,T_max,W,Load_Buses,Loads,Gen_df)
+print(LOLE)
+print(LOLF)
+print(LOEE)
