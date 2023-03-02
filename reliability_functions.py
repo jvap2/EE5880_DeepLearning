@@ -318,7 +318,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
         print("In progress, n=",n)
         n+=1
         state=np.ones(shape=N)
-        rand_val=np.random.uniform(0,1,N)
+        rand_val=np.random.rand(N)
         count=0
         for i in range(Gen_data.shape[0]):
             Gen_data.iloc[i,5]=int(-np.log(rand_val[count])/Gen_data.iloc[i,2])
@@ -340,24 +340,16 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
             for t in range(t_n,hr):
                 if(Gen_data.loc[:,"State"].any()==0):
                     C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha=0,beta=0)
-                    if C.all()==-1:
-                        print("No Solution")
+                    Temp_Load-=C
+                    if load[t]>=np.sum(Temp_Load):
                         if check_down==0:
                             LLO_yr+=1
                             check_down=1
                         LLD_yr+=1
                         ENS_yr+=abs(load[t]-Cap)
                     else:
-                        Temp_Load-=C
-                        if load[t]>=np.sum(Temp_Load):
-                            if check_down==0:
-                                LLO_yr+=1
-                                check_down=1
-                            LLD_yr+=1
-                            ENS_yr+=abs(load[t]-Cap)
-                        else:
-                            ## G_2 or G_1
-                            check_down=0
+                        ## G_2 or G_1
+                        check_down=0
             t_n=hr
             for value in T_idx_bus:
                 if state[value]==0:
@@ -439,8 +431,9 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
     for i in range(len(C)):
         x=differential_evolution(Constraints,bounds=[(0,LD[i])],args=(T,Load,LD,GD,Pl,A,T_max,i))
         C[i]=x.x
+        print(C[i])
         if x.success==0:
-            return -1*np.ones(shape=(len(C)))
+            return np.zeros(shape=(len(C)))
     return C
     
 
