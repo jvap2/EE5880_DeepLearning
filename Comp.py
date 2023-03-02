@@ -58,7 +58,7 @@ for i,row in enumerate(alpha):
     row/=np.sum(row)
     alpha[i,:]=row
     beta[i,:]=row*Loads[i]
-print(beta)
+
 
 ##Test
 T=np.empty(shape=(L,1))
