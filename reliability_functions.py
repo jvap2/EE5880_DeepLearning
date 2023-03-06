@@ -245,7 +245,7 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
     time=np.zeros(shape=N)
     Cap=0
     old_var=0
-    while err_tol>100 and n<20000:
+    while err_tol>100 and n<5:
         n+=1
         state=np.ones(shape=N)
         rand_val=np.random.uniform(0,1,N)
@@ -314,7 +314,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     Cap=0
     old_var=0
     Curt=np.empty(shape=(len(Load_Buses)))
-    while err_tol>50 and n<100:
+    while err_tol>50 and n<4:
         print("In progress, n=",n)
         n+=1
         state=np.ones(shape=N)
@@ -325,12 +325,11 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
         t_n=0
         hr=0
         Pg=Gen_data.copy()
-        Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
         while hr <8759:
+            Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
             time=Gen_data.iloc[:,5].min()
             T_idx_bus=Gen_data.index[Gen_data.iloc[:,5]==time].tolist()
             down_state_idx=Gen_data.index[Gen_data.iloc[:,4]==0].tolist()
-            Bus_Curt=Gen_data.iloc[down_state_idx,0]
             Power_Down=Gen_data.loc[down_state_idx,'Cap'].sum()
             Gen_data.iloc[:,5]=Gen_data.iloc[:,5]-time
             hr+=time
@@ -360,9 +359,6 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                     Gen_data.loc[value,'State']=0
                     Gen_data.loc[value,'State Time']=np.int_(np.floor(-np.log(np.random.rand(1))/Gen_data.loc[value,'Repair Rate']))
                     Gen_data.loc[value,'Cap']=0
-        print(LLD_yr)
-        print(LLO_yr)
-        print(ENS_yr)
         LLD.append(LLD_yr)
         LLO.append(LLO_yr)
         ENS.append(ENS_yr)
@@ -431,7 +427,6 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
     for i in range(len(C)):
         x=differential_evolution(Constraints,bounds=[(0,LD[i])],args=(T,Load,LD,GD,Pl,A,T_max,i))
         C[i]=x.x
-        print(C[i])
         if x.success==0:
             return np.zeros(shape=(len(C)))
     return C
