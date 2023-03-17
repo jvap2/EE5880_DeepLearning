@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from scipy.linalg import inv
 import scipy
-from reliability_functions import Seq_MC_Comp
+from reliability_functions import Seq_MC_Comp,Seq_MC_NN
 
 df=pd.read_csv("Impedance.csv")
 row=df['From'].to_numpy(dtype=np.int64)
@@ -103,7 +103,12 @@ for i,bus in enumerate(Gen_Buses):
 
 Gen_df=pd.DataFrame(Gen)
 
-LOLE,LOLF,LOEE=Seq_MC_Comp(data_load,gen,total_units,3405,A,T,T_max,W,Load_Buses,Loads,Gen_df)
+# LOLE,LOLF,LOEE=Seq_MC_Comp(data_load,gen,total_units,3405,A,T,T_max,W,Load_Buses,Loads,Gen_df)
+# print(LOLE)
+# print(LOLF)
+# print(LOEE)
+
+LOLE,LOLF,LOEE=Seq_MC_NN(data_load,gen,total_units,3405,A,T,T_max,W,Load_Buses,Loads,Gen_df)
 print(LOLE)
 print(LOLF)
 print(LOEE)

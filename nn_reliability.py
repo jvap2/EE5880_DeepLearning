@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import torch 
 import numpy as np
 import torch.nn as nn
-from torch.utils.data import TensorDataset, DataLoader
 from sklearn.model_selection import train_test_split
 
 
@@ -21,30 +20,36 @@ class Model(nn.Module):
     
 def Loss(output,x,Load,A,T_max):
     '''x[:,0]=Pg and x[:,1]=Pd and x[:,2]=Pl'''
+    print(x.size())
+    print(output.size())
     T=torch.matmul(A,x[:,0]+output-x[:,1])
-    loss=nn.MSELoss(x[:,0]+output-x[:,1])+nn.MSELoss(nn.ReLU(torch.sum(x[:,0])-3405))+\
-        nn.MSELoss(nn.ReLU(Load-torch.sum(x[:,1])))+nn.MSELoss(nn.ReLU(T-T_max))+\
-        nn.MSELoss(nn.ReLU(output-x[:,1]))
+    loss=nn.MSELoss()(x[:,0]+output,x[:,1])+torch.sum(output)
+    # +nn.ReLU(nn.MSELoss()(torch.sum(x[:,0]),3405))+\
+    #     nn.ReLu(nn.MSELoss()(Load-torch.sum(x[:,1])))+nn.MSELoss()(nn.ReLU(T-T_max))+\
+    #     nn.MSELoss()(nn.ReLU(output-x[:,1]))
     return loss
 
 
 def Train(model,input,Load,A,T_max,optimizer):
     num_epochs=500
-    pred=torch.empty(size=input.size(dim=1))
+    s=np.shape(A)[1]
+    pred=torch.zeros(size=(s,))
     for i in range(num_epochs):
         for (j,val) in enumerate(input):
-            pred[j]=model(input)
-            loss=Loss(pred,val,Load,A,T_max)
-            loss.backward()
+            pred[j]=model(val)
+            loss=Loss(pred,input,Load,A,T_max)
+            loss.backward(retain_graph=True)
             optimizer.step()
             optimizer.zero_grad()
     return pred
 
 def Network(input_size, hidden_size, output_size,x,Load,A,T_max):
     lr=.001
+    torch.autograd.set_detect_anomaly(True)
+    s=np.shape(A)[1]
     mod=Model(input_size,hidden_size,output_size)
     optimizer=torch.optim.Adam(mod.parameters(), lr=lr)
-    pred=torch.empty(size=x.size(dim=1))
+    pred=torch.empty(size=(s,))
     pred=Train(mod,x,Load,A,T_max,optimizer)
     return pred
 

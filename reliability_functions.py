@@ -9,6 +9,7 @@ from scipy.optimize import differential_evolution
 from scipy.special import logsumexp
 from nn_reliability import Network
 import torch
+from torch.utils.data import TensorDataset, DataLoader
 
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
@@ -501,12 +502,15 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                         else:
                             LD[i]=0
                     # C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha=0,beta=0)
-                    input=np.empty(np.shape(A)[1],3)
+                    input=np.empty(shape=(np.shape(A)[1],3))
                     input[:,0]=GD
                     input[:,1]=LD
                     input[:,2]=np.ones(np.shape(A)[1])*Power_Down
-                    input=torch.from_numpy(input)
-                    C=Network(np.shape(A)[1],np.shape(A)[1],1,input,load[t],A,T_max).numpy()
+                    input=torch.from_numpy(input).float()
+                    A_T=torch.from_numpy(A).float()
+                    T_max_T=torch.from_numpy(T_max).float()
+                    print(input.size())
+                    C=Network(3,3,1,input,load[t],A_T,T_max_T).numpy()
                     Temp_Load-=C
                     if load[t]>=np.sum(Temp_Load):
                         if check_down==0:
