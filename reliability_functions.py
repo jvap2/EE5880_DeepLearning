@@ -7,6 +7,9 @@ import pyswarms
 import pandas as pd
 from scipy.optimize import differential_evolution
 from scipy.special import logsumexp
+from nn_reliability import Network
+import torch
+
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     '''
@@ -441,3 +444,102 @@ def Constraints(C,T,Load,Pd,Pg, Pl, A, T_max,i):
         return C
     else:
         return 1e6
+    
+
+def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
+    err_tol=1e10
+    LLD=[]
+    LLO=[]
+    ENS=[]
+    LOLE=[]
+    LOLF=[]
+    LOEE=[]
+    LLD_yr=0
+    LLO_yr=0
+    ENS_yr=0
+    check_down=0
+    n=0
+    time=np.zeros(shape=N)
+    Cap=0
+    old_var=0
+    Curt=np.empty(shape=(len(Load_Buses)))
+    LD=np.empty(shape=(np.shape(A)[1]))
+    GD=np.empty(shape=(np.shape(A)[1]))
+    while err_tol>1000 and n<20:
+        print("In progress, n=",n)
+        n+=1
+        state=np.ones(shape=N)
+        rand_val=np.random.rand(N)
+        count=0
+        for i in range(Gen_data.shape[0]):
+            Gen_data.iloc[i,5]=int(-np.log(rand_val[count])/Gen_data.iloc[i,2])
+        t_n=0
+        hr=0
+        Pg=Gen_data.copy()
+        while hr <8759:
+            Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
+            time=Gen_data.iloc[:,5].min()
+            T_idx_bus=Gen_data.index[Gen_data.iloc[:,5]==time].tolist()
+            down_state_idx=Gen_data.index[Gen_data.iloc[:,4]==0].tolist()
+            Power_Down=Gen_data.loc[down_state_idx,'Cap'].sum()
+            Gen_data.iloc[:,5]=Gen_data.iloc[:,5]-time
+            hr+=time
+            if hr>8759:
+                hr=8759
+            Cap=maxCap-Power_Down
+            for t in range(t_n,hr):
+                if(Gen_data.loc[:,"State"].any()==0):
+                    for i in range(np.shape(A)[1]):
+                        count=0
+                        if i==Gen_data.loc[:,'Bus'].any()-1:
+                            GD[i]=Gen_data.loc[i+1,'Cap']
+                        else:
+                            GD[i]=0
+                        if i==Load_Buses.any()-1:
+                            LD[i]=Load_Data[count]
+                            count+=1
+                        else:
+                            LD[i]=0
+                    # C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha=0,beta=0)
+                    input=np.empty(np.shape(A)[1],3)
+                    input[:,0]=GD
+                    input[:,1]=LD
+                    input[:,2]=np.ones(np.shape(A)[1])*Power_Down
+                    input=torch.from_numpy(input)
+                    C=Network(np.shape(A)[1],np.shape(A)[1],1,input,load[t],A,T_max).numpy()
+                    Temp_Load-=C
+                    if load[t]>=np.sum(Temp_Load):
+                        if check_down==0:
+                            LLO_yr+=1
+                            check_down=1
+                        LLD_yr+=1
+                        ENS_yr+=abs(load[t]-Cap)
+                    else:
+                        ## G_2 or G_1
+                        check_down=0
+            t_n=hr
+            for value in T_idx_bus:
+                if state[value]==0:
+                    Gen_data.loc[value,'State']=1
+                    Gen_data.loc[value,'State Time']=np.int_(np.floor(-np.log(np.random.rand(1))/Gen_data.loc[value,'Failure Rate']))
+                    Gen_data.loc[value,'Cap']=Pg.loc[value,'Cap']
+                else:
+                    Gen_data.loc[value,'State']=0
+                    Gen_data.loc[value,'State Time']=np.int_(np.floor(-np.log(np.random.rand(1))/Gen_data.loc[value,'Repair Rate']))
+                    Gen_data.loc[value,'Cap']=0
+        LLD.append(LLD_yr)
+        LLO.append(LLO_yr)
+        ENS.append(ENS_yr)
+        LLD_yr,LLO_yr,ENS_yr=0,0,0
+        LOLE.append(mean(LLD))
+        LOLF.append(mean(LLO))
+        LOEE.append(mean(ENS))
+        mu_LOLE=np.mean(LOLE)
+        mu_LOLF=np.mean(LOLF)
+        mu_LOEE=np.mean(LOEE)
+        if n>1:
+            var=max(variance(LOEE),variance(LOLF),variance(LOEE))
+            err_tol=abs(var-old_var)
+        print(err_tol)
+        print(n)
+    return mu_LOLE,mu_LOLF,mu_LOEE
