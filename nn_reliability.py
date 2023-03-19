@@ -10,22 +10,23 @@ class Model(nn.Module):
         super().__init__() ##Call constructor from parent class
         self.layer1=nn.Linear(input_size,hidden_size)##Give the input and output size
         self.layer2=nn.Linear(hidden_size,output_size)
+        self.relu_1=nn.LeakyReLU(.1)
+        self.output_layer=nn.ReLU()
         
     def forward(self,x):
         '''This function will take an input pattern and do the forward pass'''
         x=self.layer1(x) 
-        x=nn.LeakyReLU(.1)(x)
+        x=self.relu_1(x)
         x=self.layer2(x)
+        x=self.output_layer(x)
         return x
     
 def Loss(output,x,Load,A,T_max):
     '''x[:,0]=Pg and x[:,1]=Pd and x[:,2]=Pl'''
     T=torch.matmul(A,x[:,0]+output-x[:,1])
-    loss=torch.sum((-output)**2)
-    # loss=nn.MSELoss()(x[:,0]+output,x[:,1])+torch.sum(output)
-    # +nn.ReLU(nn.MSELoss()(torch.sum(x[:,0]),3405))+\
-    #     nn.ReLu(nn.MSELoss()(Load-torch.sum(x[:,1])))+nn.MSELoss()(nn.ReLU(T-T_max))+\
-    #     nn.MSELoss()(nn.ReLU(output-x[:,1]))
+    loss=torch.sum((-output)**2)+torch.sum((x[:,0]+output-x[:,1])**2)+\
+    nn.ReLU()(torch.sum(x[:,0]-3405))+nn.ReLU()(Load-torch.sum(x[:,1]))+nn.ReLU()(torch.sum(T-T_max))+\
+    nn.ReLU()(torch.sum(output-x[:,1]))
     return loss
 
 

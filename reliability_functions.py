@@ -10,6 +10,7 @@ from scipy.special import logsumexp
 from nn_reliability import Network
 import torch
 from torch.utils.data import TensorDataset, DataLoader
+from torch import device
 
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
@@ -448,6 +449,10 @@ def Constraints(C,T,Load,Pd,Pg, Pl, A, T_max,i):
     
 
 def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
+    if torch.cuda.is_available():
+        dev="cuda:0"
+    else:
+        dev="cpu"
     err_tol=1e10
     LLD=[]
     LLO=[]
@@ -505,9 +510,9 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                     input[:,0]=GD
                     input[:,1]=LD
                     input[:,2]=np.ones(np.shape(A)[1])*Power_Down
-                    input=torch.from_numpy(input).float().requires_grad_()
-                    A_T=torch.from_numpy(A).float()
-                    T_max_T=torch.from_numpy(T_max).float()
+                    input=torch.from_numpy(input).float().requires_grad_().to(device=dev)
+                    A_T=torch.from_numpy(A).float().to(device=dev)
+                    T_max_T=torch.from_numpy(T_max).float().to(device=dev)
                     print(input.size())
                     C=Network(3,10,1,input,load[t],A_T,T_max_T).detach().numpy()
                     for i in range(np.shape(A)[1]):
