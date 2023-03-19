@@ -463,7 +463,6 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     time=np.zeros(shape=N)
     Cap=0
     old_var=0
-    Curt=np.empty(shape=(len(Load_Buses)))
     LD=np.empty(shape=(np.shape(A)[1]))
     GD=np.empty(shape=(np.shape(A)[1]))
     while err_tol>1000 and n<20:
@@ -501,7 +500,7 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                             count+=1
                         else:
                             LD[i]=0
-                    # C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha=0,beta=0)
+
                     input=np.empty(shape=(np.shape(A)[1],3))
                     input[:,0]=GD
                     input[:,1]=LD
@@ -510,8 +509,11 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                     A_T=torch.from_numpy(A).float()
                     T_max_T=torch.from_numpy(T_max).float()
                     print(input.size())
-                    C=Network(3,3,1,input,load[t],A_T,T_max_T).numpy()
-                    Temp_Load-=C
+                    C=Network(3,10,1,input,load[t],A_T,T_max_T).detach().numpy()
+                    for i in range(np.shape(A)[1]):
+                        count=0
+                        if i==Load_Buses.any()-1:
+                            Temp_Load[count]-=C[i]
                     if load[t]>=np.sum(Temp_Load):
                         if check_down==0:
                             LLO_yr+=1
