@@ -29,11 +29,18 @@ def Loss(output,x,Load,A,T_max):
     nn.ReLU()(torch.sum(output-x[:,1]))
     return loss
 
+def weights_init(model):
+    for m in model.modules():
+        if isinstance(m, nn.Linear):
+            # initialize the weight tensor, here we use a normal distribution
+            m.weight.data.normal_(0, 1).requires_grad_()
+
 
 def Train(model,input,Load,A,T_max,optimizer):
     num_epochs=50
     s=np.shape(A)[1]
     pred=torch.zeros(size=(s,))
+    weights_init(model=model)
     for i in range(num_epochs):
         total_loss=0
         for (j,val) in enumerate(input):
@@ -48,7 +55,7 @@ def Train(model,input,Load,A,T_max,optimizer):
             loss.backward(inputs= pred,retain_graph=True)
             total_loss=total_loss+loss.item()
             optimizer.step()
-    print("Cost: ", total_loss)
+    print("Cost: ", total_loss/s)
     return pred
 
 def Network(input_size, hidden_size, output_size,x,Load,A,T_max):

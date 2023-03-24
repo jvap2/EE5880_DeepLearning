@@ -449,10 +449,7 @@ def Constraints(C,T,Load,Pd,Pg, Pl, A, T_max,i):
     
 
 def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
-    if torch.cuda.is_available():
-        dev="cuda:0"
-    else:
-        dev="cpu"
+    dev = 'cuda' if torch.cuda.is_available() else 'cpu'
     err_tol=1e10
     print(dev)
     LLD=[]
