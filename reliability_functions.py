@@ -454,6 +454,7 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     else:
         dev="cpu"
     err_tol=1e10
+    print(dev)
     LLD=[]
     LLO=[]
     ENS=[]
@@ -513,12 +514,13 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                     input=torch.from_numpy(input).float().requires_grad_().to(device=dev)
                     A_T=torch.from_numpy(A).float().to(device=dev)
                     T_max_T=torch.from_numpy(T_max).float().to(device=dev)
-                    print(input.size())
+                    print("Evaluating Curtailment at hour ", t)
                     C=Network(3,10,1,input,load[t],A_T,T_max_T).detach().numpy()
                     for i in range(np.shape(A)[1]):
                         count=0
                         if i==Load_Buses.any()-1:
                             Temp_Load[count]-=C[i]
+                            count+=1
                     if load[t]>=np.sum(Temp_Load):
                         if check_down==0:
                             LLO_yr+=1
