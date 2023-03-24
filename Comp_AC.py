@@ -36,13 +36,14 @@ for i,(r,c) in enumerate(zip(row,col)):
     A[i,:]=(Z[r-1,:]-Z[c-1,:])/x_pu[i]
 
 
-PD=pd.read_csv("Bus_Load_Data_RTS.csv")
+PD=pd.read_csv("Total_Bus_Data_RTS.csv")
 PG=pd.read_csv("Generating_Units.csv")
 
 
 Load_Buses=PD['Bus'].to_numpy()
 Loads=PD['MW'].to_numpy()
 Gen_Buses=PG['Bus'].to_numpy()
+Gen_MVAr_Buses=PG['MVAr'].to_numpy()
 Gen_Units_MW=np.transpose(np.array([PG['Unit 1'].to_numpy(),
                        PG['Unit 2'].to_numpy(),
                        PG['Unit 3'].to_numpy(),
