@@ -505,7 +505,7 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                     input[:,0]=GD
                     input[:,1]=LD
                     input[:,2]=np.ones(np.shape(A)[1])*Power_Down
-                    input=torch.from_numpy(input).float()
+                    input=torch.from_numpy(input).float().requires_grad_()
                     A_T=torch.from_numpy(A).float()
                     T_max_T=torch.from_numpy(T_max).float()
                     print(input.size())

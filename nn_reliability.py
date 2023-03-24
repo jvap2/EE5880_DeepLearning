@@ -39,7 +39,7 @@ def Train(model,input,Load,A,T_max,optimizer):
             pred=pred.clone()
             pred[j]=model(val)
             loss=Loss(pred,input,Load,A,T_max)
-            loss.backward(retain_graph=True)
+            loss.backward(inputs=list(model.parameters()),retain_graph=True)
             total_loss=total_loss+loss.item()
             optimizer.step()
     return pred
