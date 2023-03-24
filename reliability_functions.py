@@ -319,6 +319,8 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     Cap=0
     old_var=0
     Curt=np.empty(shape=(len(Load_Buses)))
+    LD=np.empty(shape=(np.shape(A)[1]))
+    GD=np.empty(shape=(np.shape(A)[1]))
     while err_tol>1000 and n<20:
         print("In progress, n=",n)
         n+=1
@@ -343,7 +345,19 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
             Cap=maxCap-Power_Down
             for t in range(t_n,hr):
                 if(Gen_data.loc[:,"State"].any()==0):
-                    C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha=0,beta=0)
+                    for i in range(np.shape(A)[1]):
+                        count=0
+                        if i==Gen_data.loc[:,'Bus'].any()-1:
+                            GD[i]=Gen_data.loc[i+1,'Cap']
+                        else:
+                            GD[i]=0
+                        if i==Load_Buses.any()-1:
+                            LD[i]=Temp_Load[count]
+                            count+=1
+                        else:
+                            LD[i]=0
+                    # C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha=0,beta=0)
+                    C=PSO_rel(A,T,T_max,GD,load[t],Load_Buses,LD,Curt,W,Power_Down,alpha=0,beta=0)
                     Temp_Load-=C
                     if load[t]>=np.sum(Temp_Load):
                         if check_down==0:
