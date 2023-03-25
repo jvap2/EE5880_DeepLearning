@@ -19,7 +19,6 @@ def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     unit: dtype=dict, keys are the size of a unit, the values are the number of said units of a particular size
     failure_rate: d_type=dict, keys are the size of a unit, the values are the failure rates of the specific units
     repair_rate: d_type=dict, keys are the size of a unit, the values are the repair rates of the specific units
-
     Returns:
     Cap_P: dtype=dict, keys are the size of a unit, and the values are the Probability
     Cap_F: dtype=dict, keys are the size of a unit, and the values are the Frequency

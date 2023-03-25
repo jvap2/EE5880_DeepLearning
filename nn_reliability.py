@@ -67,4 +67,3 @@ def Network(input_size, hidden_size, output_size,x,Load,A,T_max):
     pred=torch.empty(size=(s,))
     pred=Train(mod,x,Load,A,T_max,optimizer)
     return pred
-
