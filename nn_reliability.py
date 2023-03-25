@@ -37,7 +37,7 @@ def weights_init(model):
 
 
 def Train(model,input,Load,A,T_max,optimizer):
-    num_epochs=50
+    num_epochs=500
     s=np.shape(A)[1]
     pred=torch.zeros(size=(s,))
     weights_init(model=model)
