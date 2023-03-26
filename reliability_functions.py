@@ -302,6 +302,7 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
         
             
 def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
+    print(type(Gen_data))
     err_tol=1e10
     LLD=[]
     LLO=[]
@@ -317,7 +318,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     time=np.zeros(shape=N)
     Cap=0
     old_var=0
-    Curt=np.empty(shape=(len(Load_Buses)))
+    Curt=np.empty(shape=np.shape(A)[1])
     LD=np.empty(shape=(np.shape(A)[1]))
     GD=np.empty(shape=(np.shape(A)[1]))
     while err_tol>1000 and n<20:
@@ -344,20 +345,12 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
             Cap=maxCap-Power_Down
             for t in range(t_n,hr):
                 if(Gen_data.loc[:,"State"].any()==0):
+                    C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha=0,beta=0)
+                    count=0
                     for i in range(np.shape(A)[1]):
-                        count=0
-                        if i==Gen_data.loc[:,'Bus'].any()-1:
-                            GD[i]=Gen_data.loc[i+1,'Cap']
-                        else:
-                            GD[i]=0
                         if i==Load_Buses.any()-1:
-                            LD[i]=Temp_Load[count]
+                            Temp_Load[count]-=C[i]
                             count+=1
-                        else:
-                            LD[i]=0
-                    # C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha=0,beta=0)
-                    C=PSO_rel(A,T,T_max,GD,load[t],Load_Buses,LD,Curt,W,Power_Down,alpha=0,beta=0)
-                    Temp_Load-=C
                     if load[t]>=np.sum(Temp_Load):
                         if check_down==0:
                             LLO_yr+=1
@@ -428,8 +421,8 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
     max_iter = 200
     LD=np.empty(shape=(np.shape(A)[1]))
     GD=np.empty(shape=(np.shape(A)[1]))
+    count=0
     for i in range(np.shape(A)[1]):
-        count=0
         if i==Gen_Data.loc[:,'Bus'].any()-1:
             GD[i]=Gen_Data.loc[i+1,'Cap']
         else:
@@ -440,13 +433,15 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
         else:
             LD[i]=0
     L=np.shape(Load_Data)
-
-
+    count=0
     for i in range(len(C)):
-        x=differential_evolution(Constraints,bounds=[(0,LD[i])],args=(T,Load,LD,GD,Pl,A,T_max,i))
-        C[i]=x.x
-        if x.success==0:
-            return np.zeros(shape=(len(C)))
+        if i==Load_Buses.any()-1:
+            x=differential_evolution(Constraints,bounds=[(0,LD[i])],args=(T,Load,LD,GD,Pl,A,T_max,i))
+            C[i]=x.x
+            if x.success==0:
+                return np.zeros(shape=(len(C)))
+        else:
+            C[i]=0
     return C
     
 
@@ -505,8 +500,8 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
             Cap=maxCap-Power_Down
             for t in range(t_n,hr):
                 if(Gen_data.loc[:,"State"].any()==0):
+                    count=0
                     for i in range(np.shape(A)[1]):
-                        count=0
                         if i==Gen_data.loc[:,'Bus'].any()-1:
                             GD[i]=Gen_data.loc[i+1,'Cap']
                         else:
@@ -516,7 +511,6 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                             count+=1
                         else:
                             LD[i]=0
-
                     input=np.empty(shape=(np.shape(A)[1],3))
                     input[:,0]=GD
                     input[:,1]=LD
