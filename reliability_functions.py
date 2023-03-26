@@ -319,9 +319,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     Cap=0
     old_var=0
     Curt=np.empty(shape=np.shape(A)[1])
-    LD=np.empty(shape=(np.shape(A)[1]))
-    GD=np.empty(shape=(np.shape(A)[1]))
-    while err_tol>1000 and n<20:
+    while err_tol>1000 and n<200:
         print("In progress, n=",n)
         n+=1
         state=np.ones(shape=N)
@@ -333,6 +331,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
         hr=0
         Pg=Gen_data.copy()
         while hr <8759:
+            C=np.zeros(shape=np.shape(A)[1])
             Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
             time=Gen_data.iloc[:,5].min()
             T_idx_bus=Gen_data.index[Gen_data.iloc[:,5]==time].tolist()
@@ -348,10 +347,11 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                     C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha=0,beta=0)
                     count=0
                     for i in range(np.shape(A)[1]):
-                        if i==Load_Buses.any()-1:
-                            Temp_Load[count]-=C[i]
-                            count+=1
-                    if load[t]>=np.sum(Temp_Load):
+                        if C.all()!=-1:
+                            if i==Load_Buses.any()-1:
+                                Temp_Load[count]-=C[i]
+                                count+=1
+                    if load[t]>=np.sum(Temp_Load) or C.all()!=-1:
                         if check_down==0:
                             LLO_yr+=1
                             check_down=1
@@ -442,12 +442,15 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
                 return np.zeros(shape=(len(C)))
         else:
             C[i]=0
-    return C
+    T=np.matmul(A,(GD+C-LD))
+    if T.all()<T_max.all() and ((GD+C).all()==LD.all()) and sum(GD)<3405 and sum(LD)>=Load:
+        return C
+    else:
+        return -1*np.ones(shape=np.shape(C))
     
 
 
 def Constraints(C,T,Load,Pd,Pg, Pl, A, T_max,i):
-    C=np.zeros(shape=np.shape(A)[1])
     C[i]=(Pd[i]*((Pg.sum())-(Pd.sum())-Pl))/(Pd.sum())
     T[i]=np.dot(A[i,:],(Pg+C-Pd))
     if T[i]<T_max[i] and (Pg[i]+C[i])==Pd[i] and sum(Pg)<3405 and sum(Pd)>=Load:
