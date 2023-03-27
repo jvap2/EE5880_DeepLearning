@@ -3,7 +3,6 @@ import math
 from math import floor
 from random import random
 from statistics import variance, mean
-import pyswarms
 import pandas as pd
 from scipy.optimize import differential_evolution
 from scipy.special import logsumexp
@@ -11,7 +10,8 @@ from nn_reliability import Network
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 from torch import device
-from nn_reliability import Model, weights_init
+from nn_reliability import weights_init, Model
+
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     '''
@@ -484,7 +484,8 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     old_var=0
     LD=np.empty(shape=(np.shape(A)[1]))
     GD=np.empty(shape=(np.shape(A)[1]))
-    weights_init(model=Model)
+    mod=Model(3,10,1)
+    weights_init(model=mod)
     while err_tol>1000 and n<20:
         print("In progress, n=",n)
         n+=1
@@ -507,8 +508,8 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
             if hr>8759:
                 hr=8759
             Cap=maxCap-Power_Down
-            for t in range(t_n,hr):
-                if(Gen_data.loc[:,"State"].any()==0):
+            if(Gen_data.loc[:,"State"].any()==0):
+                for t in range(t_n,hr):
                     count=0
                     for i in range(np.shape(A)[1]):
                         if i==Gen_data.loc[:,'Bus'].any()-1:
@@ -527,14 +528,15 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                     input=torch.from_numpy(input).float().requires_grad_().to(device=dev)
                     A_T=torch.from_numpy(A).float().to(device=dev)
                     T_max_T=torch.from_numpy(T_max).float().to(device=dev)
+                    L_T=torch.tensor(load[t]).to(device=dev)
                     print("Evaluating Curtailment at hour ", t)
-                    C=Network(3,10,1,input,load[t],A_T,T_max_T).detach().numpy()
+                    C=Network(mod,3,10,1,input,load[t],A_T,T_max_T).detach().numpy()
                     for i in range(np.shape(A)[1]):
                         count=0
                         if i==Load_Buses.any()-1:
                             Temp_Load[count]-=C[i]
                             count+=1
-                    if load[t]>=np.sum(Temp_Load):
+                    if load[t]>=np.sum(Temp_Load) or Temp_Load.any()<0:
                         if check_down==0:
                             LLO_yr+=1
                             check_down=1
