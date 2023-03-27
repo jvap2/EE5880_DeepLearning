@@ -249,7 +249,7 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
     time=np.zeros(shape=N)
     Cap=0
     old_var=0
-    while err_tol>100 and n<5:
+    while err_tol>100 and n<20000:
         n+=1
         state=np.ones(shape=N)
         rand_val=np.random.uniform(0,1,N)
@@ -319,7 +319,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     Cap=0
     old_var=0
     Curt=np.empty(shape=np.shape(A)[1])
-    while err_tol>1000 and n<200:
+    while err_tol>1000 and n<5:
         print("In progress, n=",n)
         n+=1
         state=np.ones(shape=N)
@@ -342,23 +342,22 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
             if hr>8759:
                 hr=8759
             Cap=maxCap-Power_Down
-            for t in range(t_n,hr):
-                if(Gen_data.loc[:,"State"].any()==0):
+            if(Gen_data.loc[:,"State"].any()==0):
+                for t in range(t_n,hr):
                     C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha=0,beta=0)
                     count=0
-                    for i in range(np.shape(A)[1]):
-                        if C.all()!=-1:
+                    if C.all()!=-1:
+                        for i in range(np.shape(A)[1]):
                             if i==Load_Buses.any()-1:
                                 Temp_Load[count]-=C[i]
                                 count+=1
-                    if load[t]>=np.sum(Temp_Load) or C.all()!=-1:
+                    if load[t]>=np.sum(Temp_Load) or C.all()==-1 or Temp_Load.any()<0:
                         if check_down==0:
                             LLO_yr+=1
                             check_down=1
                         LLD_yr+=1
                         ENS_yr+=abs(load[t]-Cap)
                     else:
-                        ## G_2 or G_1
                         check_down=0
             t_n=hr
             for value in T_idx_bus:
@@ -383,7 +382,8 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
         if n>1:
             var=max(variance(LOEE),variance(LOLF),variance(LOEE))
             err_tol=abs(var-old_var)
-        print(err_tol)
+            print(err_tol)
+            old_var=var
         print(n)
     return mu_LOLE,mu_LOLF,mu_LOEE
 
@@ -439,7 +439,7 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
             x=differential_evolution(Constraints,bounds=[(0,LD[i])],args=(T,Load,LD,GD,Pl,A,T_max,i))
             C[i]=x.x
             if x.success==0:
-                return np.ones(shape=(len(C)))*-1
+                C[i]=-1
         else:
             C[i]=0
     T=np.matmul(A,(GD+C-LD))
