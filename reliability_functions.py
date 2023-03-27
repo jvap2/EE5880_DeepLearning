@@ -11,7 +11,7 @@ from nn_reliability import Network
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 from torch import device
-
+from nn_reliability import Model, weights_init
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
     '''
@@ -484,6 +484,7 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     old_var=0
     LD=np.empty(shape=(np.shape(A)[1]))
     GD=np.empty(shape=(np.shape(A)[1]))
+    weights_init(model=Model)
     while err_tol>1000 and n<20:
         print("In progress, n=",n)
         n+=1

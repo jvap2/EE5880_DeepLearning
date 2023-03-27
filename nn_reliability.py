@@ -40,7 +40,7 @@ def Train(model,input,Load,A,T_max,optimizer):
     num_epochs=500
     s=np.shape(A)[1]
     pred=torch.zeros(size=(s,))
-    weights_init(model=model)
+    # weights_init(model=model)
     for i in range(num_epochs):
         total_loss=0
         for (j,val) in enumerate(input):
