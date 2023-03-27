@@ -319,7 +319,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     Cap=0
     old_var=0
     Curt=np.empty(shape=np.shape(A)[1])
-    while err_tol>10 and n<200:
+    while err_tol>150 or n<200:
         print("In progress, n=",n)
         n+=1
         state=np.ones(shape=N)
