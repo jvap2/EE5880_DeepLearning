@@ -3,7 +3,6 @@ import math
 from math import floor
 from random import random
 from statistics import variance, mean
-import pyswarms
 import pandas as pd
 from scipy.optimize import differential_evolution
 from scipy.special import logsumexp
@@ -11,6 +10,7 @@ from nn_reliability import Network
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 from torch import device
+from nn_reliability import weights_init, Model
 
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
@@ -484,6 +484,7 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     old_var=0
     LD=np.empty(shape=(np.shape(A)[1]))
     GD=np.empty(shape=(np.shape(A)[1]))
+    weights_init(model=Model)
     while err_tol>1000 and n<20:
         print("In progress, n=",n)
         n+=1
@@ -506,8 +507,8 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
             if hr>8759:
                 hr=8759
             Cap=maxCap-Power_Down
-            for t in range(t_n,hr):
-                if(Gen_data.loc[:,"State"].any()==0):
+            if(Gen_data.loc[:,"State"].any()==0):
+                for t in range(t_n,hr):
                     count=0
                     for i in range(np.shape(A)[1]):
                         if i==Gen_data.loc[:,'Bus'].any()-1:
@@ -533,7 +534,7 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                         if i==Load_Buses.any()-1:
                             Temp_Load[count]-=C[i]
                             count+=1
-                    if load[t]>=np.sum(Temp_Load):
+                    if load[t]>=np.sum(Temp_Load) or Temp_Load.any()<0:
                         if check_down==0:
                             LLO_yr+=1
                             check_down=1
