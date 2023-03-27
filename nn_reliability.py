@@ -3,7 +3,7 @@ import torch
 import numpy as np
 import torch.nn as nn
 
-
+dev = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class Model(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
@@ -33,15 +33,13 @@ def weights_init(model):
     for m in model.modules():
         if isinstance(m, nn.Linear):
             # initialize the weight tensor, here we use a normal distribution
-            m.weight.data.normal_(0, 1).requires_grad_()
+            m.weight.data.normal_(0, 1).requires_grad_().to(device=dev)
 
 
 def Train(model,input,Load,A,T_max,optimizer):
-    dev = 'cuda' if torch.cuda.is_available() else 'cpu'
     num_epochs=500
     s=np.shape(A)[1]
     pred=torch.zeros(size=(s,)).to(device=dev)
-    # weights_init(model=model)
     for i in range(num_epochs):
         total_loss=0
         for (j,val) in enumerate(input):
@@ -59,12 +57,11 @@ def Train(model,input,Load,A,T_max,optimizer):
     print("Cost: ", total_loss/s)
     return pred
 
-def Network(input_size, hidden_size, output_size,x,Load,A,T_max):
+def Network(model,input_size, hidden_size, output_size,x,Load,A,T_max):
     lr=.01
     torch.autograd.set_detect_anomaly(True)
     s=np.shape(A)[1]
-    mod=Model(input_size,hidden_size,output_size)
-    optimizer=torch.optim.Adam(mod.parameters(), lr=lr)
+    optimizer=torch.optim.Adam(model.parameters(), lr=lr)
     pred=torch.empty(size=(s,))
-    pred=Train(mod,x,Load,A,T_max,optimizer)
+    pred=Train(model,x,Load,A,T_max,optimizer)
     return pred

@@ -484,7 +484,8 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     old_var=0
     LD=np.empty(shape=(np.shape(A)[1]))
     GD=np.empty(shape=(np.shape(A)[1]))
-    weights_init(model=Model)
+    mod=Model(3,10,1)
+    weights_init(model=mod)
     while err_tol>1000 and n<20:
         print("In progress, n=",n)
         n+=1
@@ -527,8 +528,9 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                     input=torch.from_numpy(input).float().requires_grad_().to(device=dev)
                     A_T=torch.from_numpy(A).float().to(device=dev)
                     T_max_T=torch.from_numpy(T_max).float().to(device=dev)
+                    L_T=torch.tensor(load[t]).to(device=dev)
                     print("Evaluating Curtailment at hour ", t)
-                    C=Network(3,10,1,input,load[t],A_T,T_max_T).detach().numpy()
+                    C=Network(mod,3,10,1,input,load[t],A_T,T_max_T).detach().numpy()
                     for i in range(np.shape(A)[1]):
                         count=0
                         if i==Load_Buses.any()-1:
