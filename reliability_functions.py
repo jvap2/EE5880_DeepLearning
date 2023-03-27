@@ -319,7 +319,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     Cap=0
     old_var=0
     Curt=np.empty(shape=np.shape(A)[1])
-    while err_tol>1000 and n<5:
+    while err_tol>10 and n<200:
         print("In progress, n=",n)
         n+=1
         state=np.ones(shape=N)
@@ -332,7 +332,6 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
         Pg=Gen_data.copy()
         while hr <8759:
             C=np.zeros(shape=np.shape(A)[1])
-            Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
             time=Gen_data.iloc[:,5].min()
             T_idx_bus=Gen_data.index[Gen_data.iloc[:,5]==time].tolist()
             down_state_idx=Gen_data.index[Gen_data.iloc[:,4]==0].tolist()
@@ -344,6 +343,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
             Cap=maxCap-Power_Down
             if(Gen_data.loc[:,"State"].any()==0):
                 for t in range(t_n,hr):
+                    Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
                     C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha=0,beta=0)
                     count=0
                     if C.all()!=-1:
