@@ -439,13 +439,18 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
             x=differential_evolution(Constraints,bounds=[(0,LD[i])],args=(T,Load,LD,GD,Pl,A,T_max,i))
             C[i]=x.x
             if x.success==0:
-                return np.zeros(shape=(len(C)))
+                return np.ones(shape=(len(C)))*-1
         else:
             C[i]=0
     T=np.matmul(A,(GD+C-LD))
-    if T.all()<T_max.all() and ((GD+C).all()==LD.all()) and sum(GD)<3405 and sum(LD)>=Load:
+    if T.all()<T_max.all() and ((GD+C).all()==LD.all()) and sum(GD)<3405 and C.all()<=LD.all():
         return C
     else:
+        print(T.all()<T_max.all())
+        print((GD+C).all()==LD.all())
+        print(sum(GD)<3405)
+        print(C.all()<=LD.all())
+        print('mal')
         return -1*np.ones(shape=np.shape(C))
     
 
@@ -453,10 +458,10 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
 def Constraints(C,T,Load,Pd,Pg, Pl, A, T_max,i):
     C[i]=(Pd[i]*((Pg.sum())-(Pd.sum())-Pl))/(Pd.sum())
     T[i]=np.dot(A[i,:],(Pg+C-Pd))
-    if T[i]<T_max[i] and (Pg[i]+C[i])==Pd[i] and sum(Pg)<3405 and sum(Pd)>=Load:
-        return C
+    if T[i]<T_max[i] and (Pg[i]+C[i])==Pd[i] and sum(Pg)<3405 and C[i]<Pd[i]:
+        return C[i]
     else:
-        return 1e6
+        return -1
     
 
 def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
