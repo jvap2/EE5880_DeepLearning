@@ -530,7 +530,7 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                     T_max_T=torch.from_numpy(T_max).float().to(device=dev)
                     L_T=torch.tensor(load[t]).to(device=dev)
                     print("Evaluating Curtailment at hour ", t)
-                    C=Network(mod,3,10,1,input,load[t],A_T,T_max_T).detach().numpy()
+                    C=Network(mod,3,10,1,input,load[t],A_T,T_max_T).cpu().detach().numpy()
                     for i in range(np.shape(A)[1]):
                         count=0
                         if i==Load_Buses.any()-1:
