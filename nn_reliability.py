@@ -42,26 +42,28 @@ def Train(model,input,Load,A,T_max,optimizer):
     pred=torch.zeros(size=(s,)).to(device=dev)
     for i in range(num_epochs):
         total_loss=0
+        optimizer.zero_grad()
         for (j,val) in enumerate(input):
-            optimizer.zero_grad()
             pred=pred.clone()
             pred[j]=model(val)
-            constraint=(torch.autograd.grad(nn.ReLU()(torch.sum(input[:,0])-3405)+nn.ReLU()(Load-torch.sum(input[:,1]))+nn.ReLU()(torch.sum(torch.matmul(A,input[:,0]+pred-input[:,1])-T_max))+\
-            nn.ReLU()(torch.sum(pred-input[:,1])),inputs=(input),retain_graph=True))
-            for column in range(constraint[0].shape[1]):
-                pred[j]=pred[j]-constraint[0][j,column]
-            loss=Loss(pred,input,Load,A,T_max)
-            loss.backward(inputs= pred,retain_graph=True)
-            total_loss=total_loss+loss.item()
-            optimizer.step()
+        # constraint=(torch.autograd.grad(nn.ReLU()(torch.sum(input[:,0])-3405)+nn.ReLU()(Load-torch.sum(input[:,1]))+nn.ReLU()(torch.sum(torch.matmul(A,input[:,0]+pred-input[:,1])-T_max))+\
+        # nn.ReLU()(torch.sum(pred-input[:,1])),inputs=(input),retain_graph=True))
+        # for column in range(constraint[0].shape[1]):
+        #     pred[j]=pred[j]-constraint[0][j,column]
+        loss=Loss(pred,input,Load,A,T_max)
+        loss.backward(inputs= pred,retain_graph=True)
+        total_loss=total_loss+loss.item()
+        optimizer.step()
     print("Cost: ", total_loss/s)
     return pred
 
 def Network(model,input_size, hidden_size, output_size,x,Load,A,T_max):
-    lr=.01
+    lr=.001
     torch.autograd.set_detect_anomaly(True)
     s=np.shape(A)[1]
     optimizer=torch.optim.Adam(model.parameters(), lr=lr)
     pred=torch.empty(size=(s,))
+    if dev=='cuda':
+        model.to('cuda')
     pred=Train(model,x,Load,A,T_max,optimizer)
     return pred
