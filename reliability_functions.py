@@ -482,8 +482,8 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     time=np.zeros(shape=N)
     Cap=0
     old_var=0
-    LD=np.empty(shape=(np.shape(A)[1]))
-    GD=np.empty(shape=(np.shape(A)[1]))
+    LD=np.empty(shape=(np.shape(A)))
+    GD=np.empty(shape=(np.shape(A)))
     mod=Model(3,10,1)
     weights_init(model=mod)
     while err_tol>1000 and n<20:
