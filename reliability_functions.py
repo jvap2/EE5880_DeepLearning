@@ -320,6 +320,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     old_var=0
     Curt=np.empty(shape=np.shape(A)[1])
     while err_tol>1e-6 and n<5000:
+        print(Gen_data[Gen_data['Bus']==1].loc[:,'Cap'].sum())
         print("In progress, n=",n)
         n+=1
         state=np.ones(shape=N)
@@ -344,7 +345,9 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
             if(Gen_data.loc[:,"State"].any()==0):
                 for t in range(t_n,hr):
                     Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
+                    print(Temp_Load)
                     C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha=0,beta=0)
+                    print(C)
                     # C=Linear_Programming(A,T,T_max,Gen_data,Load_Buses,Temp_Load,Curt)
                     count=0
                     if C.all()!=-1:
@@ -362,9 +365,11 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                         check_down=0
             t_n=hr
             for value in T_idx_bus:
-                if state[value]==0:
+                if state[value-1]==0:
                     Gen_data.loc[value,'State']=1
                     Gen_data.loc[value,'State Time']=np.int_(np.floor(-np.log(np.random.rand(1))/Gen_data.loc[value,'Failure Rate']))
+                    print("Updating Gen Data Cap")
+                    print(Gen_data.loc[value,'State Time'])
                     Gen_data.loc[value,'Cap']=Pg.loc[value,'Cap']
                 else:
                     Gen_data.loc[value,'State']=0
@@ -420,19 +425,16 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
     '''We need to realize the load at each bus, hence this will be the best value'''
     '''This is our objective function'''
     max_iter = 200
-    LD=np.empty(shape=(np.shape(A)[1]))
-    GD=np.empty(shape=(np.shape(A)[1]))
+    LD=np.zeros(shape=(np.shape(A)[1]))
+    GD=np.zeros(shape=(np.shape(A)[1]))
+    alpha=np.ones(shape=np.shape(C))
     count=0
-    for i in range(np.shape(A)[1]):
-        if i==Gen_Data.loc[:,'Bus'].any()-1:
-            GD[i]=Gen_Data.loc[i+1,'Cap']
-        else:
-            GD[i]=0
-        if i==Load_Buses.any()-1:
-            LD[i]=Load_Data[count]
-            count+=1
-        else:
-            LD[i]=0
+    bus_list = [list(set([val for _,val in Gen_Data.loc[:,'Bus'].items()]))]
+    for val in bus_list[0]:
+        GD[val-1]=Gen_Data.loc[Gen_Data['Bus']==val,'Cap'].sum()
+    
+    for (i,bus) in enumerate(Load_Buses):
+        LD[bus-1]=Load_Data[i]
     L=np.shape(Load_Data)
     count=0
     bounds=[]
@@ -443,14 +445,7 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
     # nlc=NonlinearConstraint(NL_Constraint,lb,ub)
     x=differential_evolution(Constraints,bounds, args=(A,GD,LD,T_max))
     C=x.x
-    # for i in range(len(C)):
-    #     if i==Load_Buses.any()-1:
-    #         x=differential_evolution(Constraints,bounds=[(0,LD[i])],args=(T,Load,LD,GD,Pl,A,T_max,i))
-    #         C[i]=x.x
-    #         if x.success==0:
-    #             C[i]=-1
-    #     else:
-    #         C[i]=0
+
     T=np.matmul(A,(GD+C-LD))
     if T.all()<T_max.all() and ((GD+C).all()==LD.all()) and sum(GD)<3405 and C.all()<=LD.all():
         return C
@@ -476,6 +471,8 @@ def Linear_Programming(A,T,T_max,Gen_Data,Load_Buses,Load_Data,C):
             count+=1
         else:
             LD[i]=0
+    print(GD)
+    print(LD)
     Curt_Const=np.ones(shape=np.shape(C))
     T=np.reshape(T,newshape=((38,)))
     A_ub = A 
