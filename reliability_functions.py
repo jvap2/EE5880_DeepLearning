@@ -327,7 +327,8 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
         rand_val=np.random.rand(N)
         count=0
         for i in range(Gen_data.shape[0]):
-            Gen_data.iloc[i,5]=int(-np.log(rand_val[count])/Gen_data.iloc[i,2])
+            rng = np.random.default_rng(count)
+            Gen_data.iloc[i,5]=int(-np.log(rng.random())/Gen_data.iloc[i,2])
         t_n=0
         hr=0
         Pg=Gen_data.copy()
@@ -351,10 +352,8 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                     # C=Linear_Programming(A,T,T_max,Gen_data,Load_Buses,Temp_Load,Curt)
                     count=0
                     if C.all()!=-1:
-                        for i in range(np.shape(A)[1]):
-                            if i==Load_Buses.any()-1:
-                                Temp_Load[count]-=C[i]
-                                count+=1
+                            for (i,bus) in enumerate(Load_Buses):
+                                Temp_Load[bus-1]-=C[i]
                     if load[t]>=np.sum(Temp_Load) or C.all()==-1 or Temp_Load.any()<0:
                         if check_down==0:
                             LLO_yr+=1
@@ -428,7 +427,6 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
     LD=np.zeros(shape=(np.shape(A)[1]))
     GD=np.zeros(shape=(np.shape(A)[1]))
     alpha=np.ones(shape=np.shape(C))
-    count=0
     bus_list = [list(set([val for _,val in Gen_Data.loc[:,'Bus'].items()]))]
     for val in bus_list[0]:
         GD[val-1]=Gen_Data.loc[Gen_Data['Bus']==val,'Cap'].sum()
@@ -436,7 +434,6 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
     for (i,bus) in enumerate(Load_Buses):
         LD[bus-1]=Load_Data[i]
     L=np.shape(Load_Data)
-    count=0
     bounds=[]
     for i in range(len(C)):
         bounds.append((0,LD[i]))
