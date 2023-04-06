@@ -4,7 +4,7 @@ from math import floor
 from random import random
 from statistics import variance, mean
 import pandas as pd
-from scipy.optimize import differential_evolution
+from scipy.optimize import differential_evolution,linprog, NonlinearConstraint
 from scipy.special import logsumexp
 from nn_reliability import Network
 import torch
@@ -345,6 +345,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                 for t in range(t_n,hr):
                     Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
                     C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha=0,beta=0)
+                    # C=Linear_Programming(A,T,T_max,Gen_data,Load_Buses,Temp_Load,Curt)
                     count=0
                     if C.all()!=-1:
                         for i in range(np.shape(A)[1]):
@@ -434,14 +435,22 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
             LD[i]=0
     L=np.shape(Load_Data)
     count=0
+    bounds=[]
     for i in range(len(C)):
-        if i==Load_Buses.any()-1:
-            x=differential_evolution(Constraints,bounds=[(0,LD[i])],args=(T,Load,LD,GD,Pl,A,T_max,i))
-            C[i]=x.x
-            if x.success==0:
-                C[i]=-1
-        else:
-            C[i]=0
+        bounds.append((0,LD[i]))
+    # lb=-np.inf*np.ones(shape=np.shape(T_max))
+    # ub=T_max
+    # nlc=NonlinearConstraint(NL_Constraint,lb,ub)
+    x=differential_evolution(Constraints,bounds, args=(A,GD,LD,T_max))
+    C=x.x
+    # for i in range(len(C)):
+    #     if i==Load_Buses.any()-1:
+    #         x=differential_evolution(Constraints,bounds=[(0,LD[i])],args=(T,Load,LD,GD,Pl,A,T_max,i))
+    #         C[i]=x.x
+    #         if x.success==0:
+    #             C[i]=-1
+    #     else:
+    #         C[i]=0
     T=np.matmul(A,(GD+C-LD))
     if T.all()<T_max.all() and ((GD+C).all()==LD.all()) and sum(GD)<3405 and C.all()<=LD.all():
         return C
@@ -453,15 +462,58 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
         print('mal')
         return -1*np.ones(shape=np.shape(C))
     
-
-
-def Constraints(C,T,Load,Pd,Pg, Pl, A, T_max,i):
-    C[i]=(Pd[i]*((Pg.sum())-(Pd.sum())-Pl))/(Pd.sum())
-    T[i]=np.dot(A[i,:],(Pg+C-Pd))
-    if T[i]<T_max[i] and (Pg[i]+C[i])==Pd[i] and sum(Pg)<3405 and C[i]<Pd[i]:
-        return C[i]
+def Linear_Programming(A,T,T_max,Gen_Data,Load_Buses,Load_Data,C):
+    LD=np.empty(shape=(np.shape(A)[1]))
+    GD=np.empty(shape=(np.shape(A)[1]))
+    count=0
+    for i in range(np.shape(A)[1]):
+        if i==Gen_Data.loc[:,'Bus'].any()-1:
+            GD[i]=Gen_Data.loc[i+1,'Cap']
+        else:
+            GD[i]=0
+        if i==Load_Buses.any()-1:
+            LD[i]=Load_Data[count]
+            count+=1
+        else:
+            LD[i]=0
+    Curt_Const=np.ones(shape=np.shape(C))
+    T=np.reshape(T,newshape=((38,)))
+    A_ub = A 
+    b_ub = T_max - np.matmul(A,GD) + np.matmul(A,LD)
+    A_eq = A
+    b_eq = T- np.matmul(A,GD) + np.matmul(A,LD)
+    bounds=[]
+    for i in range(len(C)):
+        bounds.append((0,LD[i]))
+    result=linprog(Curt_Const,A_ub,b_ub,A_eq,b_eq,bounds,method="highs", integrality=2)
+    sol=result.x
+    print(result)
+    if result.success!=False:
+        if sol.all()<LD.all():
+            print("Successful")
+            return sol
+        else:
+            return -1*np.ones(shape=np.shape(C))
     else:
-        return -1
+        return -1*np.ones(shape=np.shape(C))
+
+
+
+def Constraints(C,A,GD,LD,T_max):
+    # C[i]=(Pd[i]*((Pg.sum())-(Pd.sum())-Pl))/(Pd.sum())
+    # T[i]=np.dot(A[i,:],(Pg+C-Pd))
+    # if T[i]<T_max[i] and (Pg[i]+C[i])==Pd[i] and sum(Pg)<3405 and C[i]<Pd[i]:
+    #     return C[i]
+    # else:
+    #     return -1
+    Curt=np.dot(np.ones(shape=np.shape(C)),C)
+    T=np.matmul(A,(GD+C-LD))
+    if T.all()<=T_max.all() and C.all()<=LD.all() and ((GD+C).all()==LD.all()) and sum(GD)<3405:
+        return Curt
+    else: 
+        return 10
+    
+
     
 
 def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
