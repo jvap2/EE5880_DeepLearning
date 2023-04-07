@@ -351,9 +351,11 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                     print(C)
                     # C=Linear_Programming(A,T,T_max,Gen_data,Load_Buses,Temp_Load,Curt)
                     count=0
-                    if C.all()!=-1:
-                            for (i,bus) in enumerate(Load_Buses):
-                                Temp_Load[bus-1]-=C[i]
+                    if C[0]!=-1.0:
+                            print(C)
+                            print("C!=-1")
+                            for i,_ in enumerate(Load_Buses):
+                                Temp_Load[i]-=C[i]
                     if load[t]>=np.sum(Temp_Load) or C.all()==-1 or Temp_Load.any()<0:
                         if check_down==0:
                             LLO_yr+=1
