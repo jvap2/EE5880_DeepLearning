@@ -320,7 +320,6 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     old_var=0
     Curt=np.empty(shape=np.shape(A)[1])
     while err_tol>1e-6 and n<5000:
-        print(Gen_data[Gen_data['Bus']==1].loc[:,'Cap'].sum())
         print("In progress, n=",n)
         n+=1
         state=np.ones(shape=N)
@@ -442,18 +441,17 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
     # lb=-np.inf*np.ones(shape=np.shape(T_max))
     # ub=T_max
     # nlc=NonlinearConstraint(NL_Constraint,lb,ub)
-    x=differential_evolution(Constraints,bounds, args=(A,GD,LD,T_max))
+    x=differential_evolution(Constraints,bounds, args=(A,GD,LD,T_max,Pl))
     C=x.x
-
     T=np.matmul(A,(GD+C-LD))
-    if T.all()<T_max.all() and ((GD+C).all()==LD.all()) and sum(GD)<3405 and C.all()<=LD.all():
+    check=True
+    for (i,val) in enumerate(T):
+        if abs(val)>T_max[i]:
+            check=False
+            break
+    if check and ((GD+C).all()==LD.all()) and sum(GD)<3405 and C.all()<=LD.all():
         return C
     else:
-        print(T.all()<T_max.all())
-        print((GD+C).all()==LD.all())
-        print(sum(GD)<3405)
-        print(C.all()<=LD.all())
-        print('mal')
         return -1*np.ones(shape=np.shape(C))
     
 def Linear_Programming(A,T,T_max,Gen_Data,Load_Buses,Load_Data,C):
@@ -495,13 +493,8 @@ def Linear_Programming(A,T,T_max,Gen_Data,Load_Buses,Load_Data,C):
 
 
 
-def Constraints(C,A,GD,LD,T_max):
-    # C[i]=(Pd[i]*((Pg.sum())-(Pd.sum())-Pl))/(Pd.sum())
-    # T[i]=np.dot(A[i,:],(Pg+C-Pd))
-    # if T[i]<T_max[i] and (Pg[i]+C[i])==Pd[i] and sum(Pg)<3405 and C[i]<Pd[i]:
-    #     return C[i]
-    # else:
-    #     return -1
+def Constraints(C,A,GD,LD,T_max,Pl):
+    C=(LD*((GD.sum())-(LD.sum())-Pl))/(LD.sum())
     Curt=np.dot(np.ones(shape=np.shape(C)),C)
     T=np.matmul(A,(GD+C-LD))
     if T.all()<=T_max.all() and C.all()<=LD.all() and ((GD+C).all()==LD.all()) and sum(GD)<3405:
