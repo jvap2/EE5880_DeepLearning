@@ -449,6 +449,8 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
     # nlc=NonlinearConstraint(NL_Constraint,lb,ub)
     x=differential_evolution(Constraints,bounds, args=(A,GD,LD,T_max,Pl))
     C=x.x
+    print("Curtailment vector")
+    print(C)
     T=np.matmul(A,(GD+C-LD))
     check=True
     for (i,val) in enumerate(T):
@@ -500,11 +502,11 @@ def Linear_Programming(A,T,T_max,Gen_Data,Load_Buses,Load_Data,C):
 
 
 def Constraints(C,A,GD,LD,T_max,Pl):
-    C=(LD*((GD.sum())-(LD.sum())-Pl))/(LD.sum())
+    # C=(LD*((GD.sum())-(LD.sum())-Pl))/(LD.sum())
     Curt=np.dot(np.ones(shape=np.shape(C)),C)
     T=np.matmul(A,(GD+C-LD))
     if T.all()<=T_max.all() and C.all()<=LD.all() and ((GD+C).all()==LD.all()) and sum(GD)<3405:
-        return C
+        return Curt
     else: 
         return 10
     
