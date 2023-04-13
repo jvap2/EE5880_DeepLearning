@@ -335,14 +335,14 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
             C=np.zeros(shape=np.shape(A)[1])
             time=Gen_data.iloc[:,5].min()
             T_idx_bus=Gen_data.index[Gen_data.iloc[:,5]==time].tolist()
-            print(T_idx_bus)
-            print(Gen_data['State Time'])
+            # print(T_idx_bus)
+            # print(Gen_data['State Time'])
             down_state_idx=Gen_data.index[Gen_data.iloc[:,4]==0].tolist()
-            print(down_state_idx)
+            # print(down_state_idx)
             Power_Down=Gen_data.loc[down_state_idx,'Cap'].sum()
             Gen_data.iloc[:,5]=Gen_data.iloc[:,5]-time
             state=Gen_data["State"].to_numpy()
-            print(state)
+            # print(state)
             hr+=time
             if hr>8759:
                 hr=8759
@@ -372,12 +372,12 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
             t_n=hr
             for value in T_idx_bus:
                 if state[value]==0:
-                    print(value)
+                    # print(value)
                     Gen_data.loc[value,'State']=1
                     Gen_data.loc[value,'State Time']=np.int_(np.floor(-np.log(np.random.rand(1))/Gen_data.loc[value,'Failure Rate']))
                     Gen_data.loc[value,'Cap']=Pg.loc[value,'Cap']
                 else:
-                    print(value)
+                    # print(value)
                     Gen_data.loc[value,'State']=0
                     Gen_data.loc[value,'State Time']=np.int_(np.floor(-np.log(np.random.rand(1))/Gen_data.loc[value,'Repair Rate']))
                     Gen_data.loc[value,'Cap']=0
