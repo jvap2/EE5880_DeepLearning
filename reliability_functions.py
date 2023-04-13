@@ -319,7 +319,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     Cap=0
     old_var=0
     Curt=np.empty(shape=np.shape(A)[1])
-    while err_tol>1e-6 and n<5000:
+    while err_tol>1e-6 and n<180:
         print("In progress, n=",n)
         n+=1
         state=np.ones(shape=N)
@@ -346,14 +346,10 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
             if(state.any()==0):
                 for t in range(t_n,hr):
                     Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
-                    print(Temp_Load)
                     C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha=0,beta=0)
-                    print(C)
                     # C=Linear_Programming(A,T,T_max,Gen_data,Load_Buses,Temp_Load,Curt)
                     count=0
                     if C[0]!=-1.0:
-                            print(C)
-                            print("C!=-1")
                             for i,_ in enumerate(Load_Buses):
                                 Temp_Load[i]-=C[i]
                     if load[t]>=np.sum(Temp_Load) or C.all()==-1 or Temp_Load.any()<0:
