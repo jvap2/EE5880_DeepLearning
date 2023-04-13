@@ -338,11 +338,12 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
             down_state_idx=Gen_data.index[Gen_data.iloc[:,4]==0].tolist()
             Power_Down=Gen_data.loc[down_state_idx,'Cap'].sum()
             Gen_data.iloc[:,5]=Gen_data.iloc[:,5]-time
+            state=Gen_data["State"].to_numpy()
             hr+=time
             if hr>8759:
                 hr=8759
             Cap=maxCap-Power_Down
-            if(Gen_data.loc[:,"State"].any()==0):
+            if(state.any()==0):
                 for t in range(t_n,hr):
                     Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
                     print(Temp_Load)
