@@ -301,7 +301,7 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
     return mu_LOLE,mu_LOLF,mu_LOEE
         
             
-def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
+def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alpha):
     print(type(Gen_data))
     err_tol=1e10
     LLD=[]
@@ -319,7 +319,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     Cap=0
     old_var=0
     Curt=np.empty(shape=np.shape(A)[1])
-    while err_tol>1e-6 and n<180:
+    while err_tol>1e-6 and n<70:
         print("In progress, n=",n)
         n+=1
         state=np.ones(shape=N)
@@ -355,7 +355,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
             if(check):
                 for t in range(t_n,hr):
                     Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
-                    C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha=0,beta=0)
+                    C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha)
                     # C=Linear_Programming(A,T,T_max,Gen_data,Load_Buses,Temp_Load,Curt)
                     count=0
                     if C[0]!=-1.0:
@@ -447,7 +447,7 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
     # lb=-np.inf*np.ones(shape=np.shape(T_max))
     # ub=T_max
     # nlc=NonlinearConstraint(NL_Constraint,lb,ub)
-    x=differential_evolution(Constraints,bounds, args=(A,GD,LD,T_max,Pl))
+    x=differential_evolution(Constraints,bounds, args=(A,GD,LD,T_max,Pl,alpha))
     C=x.x
     # print("Curtailment vector")
     # print(C)
@@ -501,9 +501,9 @@ def Linear_Programming(A,T,T_max,Gen_Data,Load_Buses,Load_Data,C):
 
 
 
-def Constraints(C,A,GD,LD,T_max,Pl):
+def Constraints(C,A,GD,LD,T_max,Pl,alpha):
     C=(LD*((GD.sum())-(LD.sum())-Pl))/(LD.sum())
-    Curt=np.dot(np.ones(shape=np.shape(C)),C)
+    Curt=np.dot(alpha,C)
     T=np.matmul(A,(GD+C-LD))
     if T.all()<=T_max.all() and C.all()<=LD.all() and ((GD+C).all()==LD.all()) and sum(GD)<3405:
         return Curt

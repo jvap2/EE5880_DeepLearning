@@ -51,13 +51,11 @@ Gen_Units_MW=np.transpose(np.array([PG['Unit 1'].to_numpy(),
                        PG['Unit 6'].to_numpy()]))
 
 NC=len(Load_Buses)
-alpha=np.empty(shape=(NC,3))
-beta=np.empty(shape=(NC,3))
+alpha=np.empty(shape=(NC))
+beta=np.empty(shape=(NC))
 for i,row in enumerate(alpha):
-    row=np.random.random(size=(1,3))
-    row/=np.sum(row)
-    alpha[i,:]=row
-    beta[i,:]=row*Loads[i]
+    row= Loads[i]
+    alpha[i]=row/np.sum(Loads[i])
 
 
 ##Test
@@ -105,7 +103,7 @@ Gen_df=pd.DataFrame(Gen)
 
 print(Gen_df)
 
-LOLE,LOLF,LOEE=Seq_MC_Comp(data_load,gen,total_units,3405,A,T,T_max,W,Load_Buses,Loads,Gen_df)
+LOLE,LOLF,LOEE=Seq_MC_Comp(data_load,gen,total_units,3405,A,T,T_max,W,Load_Buses,Loads,Gen_df,alpha)
 print(LOLE)
 print(LOLF)
 print(LOEE)
