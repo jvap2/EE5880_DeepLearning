@@ -49,15 +49,22 @@ Gen_Units_MW=np.transpose(np.array([PG['Unit 1'].to_numpy(),
                        PG['Unit 4'].to_numpy(),
                        PG['Unit 5'].to_numpy(),
                        PG['Unit 6'].to_numpy()]))
+print(Gen_Units_MW)
 
 NC=len(Load_Buses)
-alpha=np.empty(shape=(NC))
+alpha=np.zeros(shape=(NC))
 beta=np.empty(shape=(NC))
-for i,row in enumerate(alpha):
-    row= Loads[i]
-    alpha[i]=row/np.sum(Loads[i])
+for i,bus in enumerate(Load_Buses):
+    row= df.loc[df["From"]==bus,'Length(miles)'].sum()
+    print(row)
+    print(np.sum(Loads[i]))
+    if row<1e-6:
+        alpha[i]=100
+    else:
+        alpha[i]=np.sum(Loads[i])/row
 
-
+alpha=(alpha-np.min(alpha))/(np.max(alpha)-np.min(alpha))+.1
+print(alpha)
 ##Test
 T=np.empty(shape=(L,1))
 # for i,row in enumerate(T):
