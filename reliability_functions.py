@@ -304,12 +304,12 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
 def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alpha):
     print(type(Gen_data))
     err_tol=1e10
-    LLD=[]
-    LLO=[]
-    ENS=[]
-    LOLE=[]
-    LOLF=[]
-    LOEE=[]
+    LLD=[0]
+    LLO=[0]
+    ENS=[0]
+    LOLE=[0]
+    LOLF=[0]
+    LOEE=[0]
     LLD_yr=0
     LLO_yr=0
     ENS_yr=0
@@ -355,7 +355,8 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
             if(check):
                 for t in range(t_n,hr):
                     Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
-                    C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha)
+                    alpha_temp=alpha.copy()
+                    C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha_temp)
                     # C=Linear_Programming(A,T,T_max,Gen_data,Load_Buses,Temp_Load,Curt)
                     count=0
                     if C[0]!=-1.0:
@@ -391,11 +392,13 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
         mu_LOLE=np.mean(LOLE)
         mu_LOLF=np.mean(LOLF)
         mu_LOEE=np.mean(LOEE)
-        if n>1:
-            var=max(variance(LOEE),variance(LOLF),variance(LOEE))
-            err_tol=abs(var-old_var)
-            print(err_tol)
-            old_var=var
+        var=max(variance(LOEE),variance(LOLF),variance(LOEE))
+        err_tol=abs(var-old_var)
+        print("Error Tolerance ",err_tol)
+        print("Average LOLE ",mu_LOLE)
+        print("Average LOLF ",mu_LOLF)
+        print("Average LOEE ",mu_LOEE)
+        old_var=var
         print(n)
     return mu_LOLE,mu_LOLF,mu_LOEE
 
@@ -502,13 +505,18 @@ def Linear_Programming(A,T,T_max,Gen_Data,Load_Buses,Load_Data,C):
 
 
 def Constraints(C,A,GD,LD,T_max,Pl,alpha):
-    # C=(LD*((GD.sum())-(LD.sum())-Pl))/(LD.sum())
+    C=LD*((GD.sum()-LD.sum()-Pl)/(LD.sum()))
     Curt=np.dot(alpha,C)
     T=np.matmul(A,(GD+C-LD))
-    if T.all()<=T_max.all() and C.all()<=LD.all() and ((GD+C).all()==LD.all()) and sum(GD)<3405:
-        return Curt
-    else: 
-        return 10
+    abs(T[0:])<T_max[0:]
+    C[0:]<LD[0:]
+    GD[0:]+C[0:]==LD[0:]
+    sum(GD)<3405
+    return Curt
+    # if T.all()<=T_max.all() and C.all()<=LD.all() and ((GD+C).all()==LD.all()) and sum(GD)<3405:
+    #     return Curt
+    # else: 
+    #     return 10
     
 
     
