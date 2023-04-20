@@ -10,9 +10,11 @@ col=df['To'].to_numpy(dtype=np.int64)
 r_pu=df['R(pu)'].to_numpy()
 x_pu=df['X(pu)'].to_numpy()
 length=df['Length(miles)'].to_numpy()
+V=df["Voltage"].to_numpy()
 T_max=df['Rating'].to_numpy()
 length=(length-np.min(length))/(np.max(length)-np.min(length))
-admit=1/r_pu
+R=np.multiply(r_pu,np.multiply(V,V))/100
+admit=1/R 
 
 Y=np.zeros(shape=(max(col),max(col)))
 W=np.zeros(shape=(max(col),max(col)))
@@ -33,9 +35,9 @@ NS=max(col)
 A=np.zeros(shape=(L,NS))
 
 for i,(r,c) in enumerate(zip(row,col)):
-    A[i,:]=(Z[r-1,:]-Z[c-1,:])/x_pu[i]
+    A[i,:]=(Z[r-1,:]-Z[c-1,:])/((x_pu[i]*V[i]**2)/100)
 
-
+print(A)
 PD=pd.read_csv("Bus_Load_Data_RTS.csv")
 PG=pd.read_csv("Generating_Units.csv")
 
@@ -49,28 +51,27 @@ Gen_Units_MW=np.transpose(np.array([PG['Unit 1'].to_numpy(),
                        PG['Unit 4'].to_numpy(),
                        PG['Unit 5'].to_numpy(),
                        PG['Unit 6'].to_numpy()]))
-print(Gen_Units_MW)
+
 
 NC=len(Load_Buses)
 alpha=np.zeros(shape=(NC))
 beta=np.empty(shape=(NC))
 for i,bus in enumerate(Load_Buses):
     row= df.loc[df["From"]==bus,'Length(miles)'].sum()
-    print(row)
-    print(np.sum(Loads[i]))
     if row<1e-6:
         alpha[i]=100
     else:
         alpha[i]=np.sum(Loads[i])/row
 
 alpha=(alpha-np.min(alpha))/(np.max(alpha)-np.min(alpha))+.1
-print(alpha)
 ##Test
 T=np.empty(shape=(L,1))
 # for i,row in enumerate(T):
 #     PG_sum=np.sum(Gen_Units_MW)-np.sum(Loads)
 #     row=np.sum(A[i,:])*PG_sum
 #     T[i]=row
+
+# print(T)
 data_df=pd.read_csv("load_csv_data.csv")
 rows=len(data_df.axes[0])
 cols=len(data_df.axes[1])
@@ -108,7 +109,7 @@ for i,bus in enumerate(Gen_Buses):
 
 Gen_df=pd.DataFrame(Gen)
 
-print(Gen_df)
+
 
 LOLE,LOLF,LOEE=Seq_MC_Comp(data_load,gen,total_units,3405,A,T,T_max,W,Load_Buses,Loads,Gen_df,alpha)
 print(LOLE)
