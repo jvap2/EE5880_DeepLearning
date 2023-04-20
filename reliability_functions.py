@@ -367,8 +367,6 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
                         if check_down==0:
                             LLO_yr+=1
                             check_down=1
-                        else:
-                            check_down=0
                         LLD_yr+=1
                         ENS_yr+=abs(load[t]-Cap)
                     else:
