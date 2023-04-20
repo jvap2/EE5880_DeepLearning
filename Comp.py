@@ -19,12 +19,13 @@ W=np.zeros(shape=(max(col),max(col)))
 for i,(r,c) in enumerate(zip(row,col)):
     Y[r-1,c-1]-=admit[i]
     Y[c-1,r-1]-=admit[i]
-    W[r-1,c-1]=length[i]
-    W[c-1,r-1]=length[i]
+    # W[r-1,c-1]=length[i]
+    # W[c-1,r-1]=length[i]
 
 
 for i,q in enumerate(Y):
     Y[i,i]=-sum(q)
+
 
 Z=inv(Y)
 L=len(admit)
@@ -35,7 +36,7 @@ A=np.zeros(shape=(L,NS))
 for i,(r,c) in enumerate(zip(row,col)):
     A[i,:]=(Z[r-1,:]-Z[c-1,:])/x_pu[i]
 
-
+print(A)
 PD=pd.read_csv("Bus_Load_Data_RTS.csv")
 PG=pd.read_csv("Generating_Units.csv")
 
@@ -56,8 +57,6 @@ alpha=np.zeros(shape=(NC))
 beta=np.empty(shape=(NC))
 for i,bus in enumerate(Load_Buses):
     row= df.loc[df["From"]==bus,'Length(miles)'].sum()
-    print(row)
-    print(np.sum(Loads[i]))
     if row<1e-6:
         alpha[i]=100
     else:

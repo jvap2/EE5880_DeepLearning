@@ -502,7 +502,7 @@ def Linear_Programming(A,T,T_max,Gen_Data,Load_Buses,Load_Data,C):
 
 
 def Constraints(C,A,GD,LD,T_max,Pl,alpha):
-    C=(LD*((GD.sum())-(LD.sum())-Pl))/(LD.sum())
+    # C=(LD*((GD.sum())-(LD.sum())-Pl))/(LD.sum())
     Curt=np.dot(alpha,C)
     T=np.matmul(A,(GD+C-LD))
     if T.all()<=T_max.all() and C.all()<=LD.all() and ((GD+C).all()==LD.all()) and sum(GD)<3405:
