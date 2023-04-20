@@ -319,18 +319,19 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
     Cap=0
     old_var=0
     Curt=np.empty(shape=np.shape(A)[1])
-    while err_tol>1e-6 or n<70:
+    Pg=Gen_data.copy()
+    while err_tol>1e-6 or n<7000:
         print("In progress, n=",n)
         n+=1
         state=np.ones(shape=N)
         rand_val=np.random.rand(N)
         count=0
+        Gen_data=Pg.copy()
         for i in range(Gen_data.shape[0]):
             rng = np.random.default_rng(count)
             Gen_data.iloc[i,5]=int(-np.log(rng.random())/Gen_data.iloc[i,2])
         t_n=0
         hr=0
-        Pg=Gen_data.copy()
         while hr <8759:
             alpha_temp=alpha.copy()
             C=np.zeros(shape=np.shape(A)[1])
@@ -342,7 +343,6 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
                     
             # print(down_state_idx)
             Power_Down=Pg.loc[down_state_idx,'Cap'].sum()
-            print(Power_Down)
             Gen_data.iloc[:,5]=Gen_data.iloc[:,5]-time
             state=Gen_data["State"].to_numpy()
             # print(state)
@@ -365,14 +365,17 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
                         if C[0]!=-1.0:
                                 for i,_ in enumerate(Load_Buses):
                                     Temp_Load[i]-=C[i]
-                        if load[t]>=np.sum(Temp_Load) or C[0]==-1 or Temp_Load.any()<0:
+                        # print((Temp_Load[0:]>np.zeros(shape=np.shape(Temp_Load[0:]))).all())
+                        # print(Temp_Load)
+                        #load[t]>=np.sum(Temp_Load) or C[0]==-1 or 
+                        if (Temp_Load[0:]>np.zeros(shape=np.shape(Temp_Load[0:]))).all() or C[0]==-1:
                             if check_down==0:
                                 LLO_yr+=1
                                 check_down=1
                             LLD_yr+=1
                             ENS_yr+=abs(load[t]-Cap)
-                        else:
-                            check_down=0
+                    else:
+                        check_down=0
             t_n=hr
             for value in T_idx_bus:
                 if state[value]==0:
