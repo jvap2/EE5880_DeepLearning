@@ -363,7 +363,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
                     if C[0]!=-1.0:
                             for i,_ in enumerate(Load_Buses):
                                 Temp_Load[i]-=C[i]
-                    if load[t]>=np.sum(Temp_Load) or C.all()==-1 or Temp_Load.any()<0:
+                    if load[t]>=np.sum(Temp_Load) or C[0]==-1 or Temp_Load.any()<0:
                         if check_down==0:
                             LLO_yr+=1
                             check_down=1
@@ -456,15 +456,17 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
     # print("Curtailment vector")
     # print(C)
     T=np.matmul(A,(GD+C-LD))
-    check=True
-    for (i,val) in enumerate(T):
-        if abs(val)>T_max[i]:
-            check=False
-            break
-    if check and ((GD+C).all()==LD.all()) and sum(GD)<3405 and C.all()<=LD.all():
+    print((abs(T[0:])<T_max[0:]).all())
+    print((C[0:]<=LD[0:]).all())
+    print(np.sum(GD[0:])+np.sum(C[0:])>=np.sum(LD[0:]))
+    print(sum(GD)<3405)
+    check=((abs(T[0:])<T_max[0:]).all() and (C[0:]<=LD[0:]).all() and np.sum(GD[0:])+np.sum(C[0:])>=np.sum(LD[0:]) and sum(GD)<3405)
+    if check:
         return C
     else:
         return -1*np.ones(shape=np.shape(C))
+
+
     
 def Linear_Programming(A,T,T_max,Gen_Data,Load_Buses,Load_Data,C):
     LD=np.empty(shape=(np.shape(A)[1]))
@@ -507,13 +509,13 @@ def Linear_Programming(A,T,T_max,Gen_Data,Load_Buses,Load_Data,C):
 
 def Constraints(C,A,GD,LD,T_max,Pl,alpha):
     C=LD*((GD.sum()-LD.sum()-Pl)/(LD.sum()))
-    Curt=np.dot(alpha,C)
+    # Curt=np.dot(alpha,C)
     T=np.matmul(A,(GD+C-LD))
-    abs(T[0:])<T_max[0:]
-    C[0:]<LD[0:]
-    GD[0:]+C[0:]==LD[0:]
+    (abs(T[0:])<T_max[0:]).all()
+    (C[0:]<=LD[0:]).all()
+    (np.sum(GD[0:])+np.sum(C[0:]))==np.sum(LD[0:])
     sum(GD)<3405
-    return Curt
+    return np.sum(C)
     # if T.all()<=T_max.all() and C.all()<=LD.all() and ((GD+C).all()==LD.all()) and sum(GD)<3405:
     #     return Curt
     # else: 
