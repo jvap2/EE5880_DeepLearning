@@ -341,7 +341,8 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
             #     for b in Load_Buses:
                     
             # print(down_state_idx)
-            Power_Down=Gen_data.loc[down_state_idx,'Cap'].sum()
+            Power_Down=Pg.loc[down_state_idx,'Cap'].sum()
+            print(Power_Down)
             Gen_data.iloc[:,5]=Gen_data.iloc[:,5]-time
             state=Gen_data["State"].to_numpy()
             # print(state)
@@ -357,8 +358,6 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
             if(check):
                 for t in range(t_n,hr):
                     Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
-                    print(load[t])
-                    print(Cap)
                     if(load[t]>=Cap):
                         C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha_temp)
                         # C=Linear_Programming(A,T,T_max,Gen_data,Load_Buses,Temp_Load,Curt)
