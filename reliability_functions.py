@@ -332,12 +332,14 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
         hr=0
         Pg=Gen_data.copy()
         while hr <8759:
+            alpha_temp=alpha.copy()
             C=np.zeros(shape=np.shape(A)[1])
             time=Gen_data.iloc[:,5].min()
             T_idx_bus=Gen_data.index[Gen_data.iloc[:,5]==time].tolist()
-            # print(T_idx_bus)
-            # print(Gen_data['State Time'])
             down_state_idx=Gen_data.index[Gen_data.iloc[:,4]==0].tolist()
+            # for idx in down_state_idx:
+            #     for b in Load_Buses:
+                    
             # print(down_state_idx)
             Power_Down=Gen_data.loc[down_state_idx,'Cap'].sum()
             Gen_data.iloc[:,5]=Gen_data.iloc[:,5]-time
@@ -355,7 +357,6 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
             if(check):
                 for t in range(t_n,hr):
                     Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
-                    alpha_temp=alpha.copy()
                     C=PSO_rel(A,T,T_max,Gen_data,load[t],Load_Buses,Temp_Load,Curt,W,Power_Down,alpha_temp)
                     # C=Linear_Programming(A,T,T_max,Gen_data,Load_Buses,Temp_Load,Curt)
                     count=0
@@ -366,6 +367,8 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
                         if check_down==0:
                             LLO_yr+=1
                             check_down=1
+                        else:
+                            check_down=0
                         LLD_yr+=1
                         ENS_yr+=abs(load[t]-Cap)
                     else:

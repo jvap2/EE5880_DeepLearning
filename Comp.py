@@ -9,10 +9,10 @@ row=df['From'].to_numpy(dtype=np.int64)
 col=df['To'].to_numpy(dtype=np.int64)
 r_pu=df['R(pu)'].to_numpy()
 x_pu=df['X(pu)'].to_numpy()
-length=df['Length(miles)'].to_numpy()
+l=df['Length(miles)'].to_numpy()
 V=df["Voltage"].to_numpy()
 T_max=df['Rating'].to_numpy()
-length=(length-np.min(length))/(np.max(length)-np.min(length))
+length=(l-np.min(l))/(np.max(l)-np.min(l))
 R=np.multiply(r_pu,np.multiply(V,V))/100
 admit=1/R 
 
