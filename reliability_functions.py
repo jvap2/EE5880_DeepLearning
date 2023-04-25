@@ -304,12 +304,12 @@ def Seq_MC(fail,success,load,gen,N,maxCap):
 def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alpha):
     print(type(Gen_data))
     err_tol=1e10
-    LLD=[0]
-    LLO=[0]
-    ENS=[0]
-    LOLE=[0]
-    LOLF=[0]
-    LOEE=[0]
+    LLD=[9]
+    LLO=[2]
+    ENS=[2000]
+    LOLE=[9]
+    LOLF=[2]
+    LOEE=[2000]
     LLD_yr=0
     LLO_yr=0
     ENS_yr=0
@@ -329,7 +329,6 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
         Gen_data=Pg.copy()
         time_TF=np.int_(np.floor(np.divide(-np.log(rand_val),Gen_data["Failure Rate"].to_numpy())))
         for i in range(Gen_data.shape[0]):
-            rng = np.random.default_rng(count)
             Gen_data.iloc[i,5]=time_TF[i]
         t_n=0
         hr=0
@@ -366,7 +365,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
                         # print(Temp_Load)
                         #load[t]>=np.sum(Temp_Load) or C[0]==-1 or 
                         # (Temp_Load[0:]<np.zeros(shape=np.shape(Temp_Load[0:]))).all()
-                        if (not (Temp_Load[0:]>np.zeros(shape=np.shape(Temp_Load[0:]))).all()) or C[0]==-1:
+                        if (not (Temp_Load[0:]>np.zeros(shape=np.shape(Temp_Load[0:]))).all()) or C[0]==-1 or (np.sum(C)+Gen_data["Cap"].sum()<Cap):
                             if check_down==0:
                                 LLO_yr+=1
                                 check_down=1
@@ -459,7 +458,7 @@ def PSO_rel(A,T,T_max,Gen_Data,Load,Load_Buses,Load_Data,C,W,Pl,alpha=0,beta=0):
     # print("Curtailment vector")
     # print(C)
     T=np.matmul(A,(GD+C-LD))
-    check=((abs(T[0:])<T_max[0:]).all() and (C[0:]<=LD[0:]).all() and np.sum(GD[0:])+np.sum(C[0:])>=np.sum(LD[0:]) and sum(GD)<3405)
+    check=((abs(T[0:])<T_max[0:]).all() and (C[0:]<=LD[0:]).all() and np.sum(GD[0:])+np.sum(C[0:])==np.sum(LD[0:]) and sum(GD)<3405)
     if check and x.success!=False:
         return C
     else:
@@ -514,11 +513,10 @@ def Constraints(C,A,GD,LD,T_max,Pl,alpha):
     (C[0:]<=LD[0:]).all()
     (np.sum(GD[0:])+np.sum(C[0:]))==np.sum(LD[0:])
     sum(GD)<3405
-    return Curt
-    # if T.all()<=T_max.all() and C.all()<=LD.all() and ((GD+C).all()==LD.all()) and sum(GD)<3405:
-    #     return Curt
-    # else: 
-    #     return 10
+    if (abs(T[0:])<T_max[0:]).all() and (C[0:]<=LD[0:]).all()and (np.sum(GD[0:])+np.sum(C[0:]))==np.sum(LD[0:]) and sum(GD)<3405:
+        return Curt
+    else: 
+        return 10
     
 
     

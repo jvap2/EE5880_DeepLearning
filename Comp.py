@@ -110,6 +110,7 @@ for i,bus in enumerate(Gen_Buses):
 
 
 Gen_df=pd.DataFrame(Gen)
+print(Gen_df)
 
 
 
