@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch
 import torchvision
 from torchvision import transforms, datasets
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader, Subset, Dataset
 from torchvision.transforms import ToTensor
 import numpy as np
 import matplotlib.pyplot as plt
@@ -86,10 +86,16 @@ def Train(Model, train_input, val_input):
     return train_loss, val_loss, train_acc, val_acc
 
 
-def Convert(string):
-	list1 = []
-	list1[:0] = string
-	return list1
+class Data_NN(Dataset):
+    def __init__(self,d,labels):
+        self.data=d
+        self.labels=labels
+    def __len__(self):
+        return self.d.shape[0]
+    def __getitem__(self, index):
+        data= self.data[index,:,:]
+        lab=self.labels[index]
+        return data, lab
 
 
 def Clean_Data():
@@ -105,6 +111,12 @@ def Clean_Data():
     PD_2=df_2['PowerData'].to_numpy()
     PD_3=df_3['PowerData'].to_numpy()
     PD_4=df_4['PowerData'].to_numpy()
+    Label_1=df_1['Fail'].to_numpy()
+    Label_2=df_2['Fail'].to_numpy()
+    Label_3=df_3['Fail'].to_numpy()
+    Label_4=df_4['Fail'].to_numpy()
+    Data=np.empty(shape=(np.shape(LD_1)[0]+np.shape(LD_2)[0]+np.shape(LD_3)[0]+np.shape(LD_4)[0],2,24))
+    Labels=np.empty(shape=(np.shape(LD_1)[0]+np.shape(LD_2)[0]+np.shape(LD_3)[0]+np.shape(LD_4)[0]))
     for j,(dummy,pdummy) in enumerate(zip(LD_1,PD_1)):
         dummy=LD_1[j].split('.')
         pdummy=PD_1[j].split('.')
@@ -126,9 +138,9 @@ def Clean_Data():
             pdummy[i]=float(x)
         del dummy[-1]
         del pdummy[-1]
-        LD_1[j]=np.array(dummy)
-        PD_1[j]=np.array(pdummy)
-    print(LD_1)
+        Data[j,0,:]=dummy
+        Data[j,1,:]=pdummy
+        Labels[j]=Label_1[j]
     for j,(dummy,pdummy) in enumerate(zip(LD_2,PD_2)):
         dummy=LD_2[j].split('.')
         pdummy=PD_2[j].split('.')
@@ -150,8 +162,9 @@ def Clean_Data():
             pdummy[i]=float(x)
         del dummy[-1]
         del pdummy[-1]
-        LD_2[j]=np.array(dummy)
-        PD_2[j]=np.array(pdummy)
+        Data[j+np.shape(LD_1)[0],0,:]=dummy
+        Data[j+np.shape(LD_1)[0],1,:]=pdummy
+        Labels[j+np.shape(LD_1)[0]]=Label_2[j]
     for j,(dummy,pdummy) in enumerate(zip(LD_3,PD_3)):
         dummy=LD_3[j].split('.')
         pdummy=PD_3[j].split('.')
@@ -173,8 +186,9 @@ def Clean_Data():
             pdummy[i]=float(x)
         del dummy[-1]
         del pdummy[-1]
-        LD_3[j]=np.array(dummy)
-        PD_3[j]=np.array(pdummy)
+        Data[j+np.shape(LD_1)[0]+np.shape(LD_2)[0],0,:]=dummy
+        Data[j+np.shape(LD_1)[0]+np.shape(LD_2)[0],1,:]=pdummy
+        Labels[j+np.shape(LD_1)[0]+np.shape(LD_2)[0]]=Label_3[j]
     for j,(dummy,pdummy) in enumerate(zip(LD_4,PD_4)):
         dummy=LD_4[j].split('.')
         pdummy=PD_4[j].split('.')
@@ -186,14 +200,27 @@ def Clean_Data():
             if x==']':
                 break
             dummy[i]=float(x)
+        for i,x in enumerate(pdummy):
+            if x[:2]=='\r\n':
+                x=x[2:]
+            if x[0]=='[':
+                x=x[1:]
+            if x==']':
+                break
+            pdummy[i]=float(x)
         del dummy[-1]
-        LD_4[j]=np.array(dummy)
-        PD_4[j]=np.array(pdummy)
-    print(np.shape(LD_1))
-    return LD_1,LD_2,LD_3,LD_4,PD_1,PD_2,PD_3,PD_4
+        del pdummy[-1]
+        Data[j+np.shape(LD_1)[0]+np.shape(LD_2)[0]+np.shape(LD_3)[0],0,:]=dummy
+        Data[j+np.shape(LD_1)[0]+np.shape(LD_2)[0]+np.shape(LD_3)[0],1,:]=pdummy
+        Labels[j+np.shape(LD_1)[0]+np.shape(LD_2)[0]+np.shape(LD_3)[0]]=Label_3[j]
+    return Data,Labels
+
+
 
 if __name__=='__main__':
-    LD_1,LD_2,LD_3,LD_4,PD_1,PD_2,PD_3,PD_4=Clean_Data()
-
+    Data,Label=Clean_Data()
+    print(Data)
+    dataset=Data_NN(Data,Label)
+    dl=DataLoader(dataset,batch_size=32)
 
     
