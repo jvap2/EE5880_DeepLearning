@@ -560,15 +560,14 @@ def Constraints(C,A,GD,LD,T_max,Pl,alpha):
     
 
 def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
-    dev = 'cuda' if torch.cuda.is_available() else 'cpu'
+    print(type(Gen_data))
     err_tol=1e10
-    print(dev)
-    LLD=[]
-    LLO=[]
-    ENS=[]
-    LOLE=[]
-    LOLF=[]
-    LOEE=[]
+    LLD=[9]
+    LLO=[2]
+    ENS=[2000]
+    LOLE=[9]
+    LOLF=[2]
+    LOEE=[2000]
     LLD_yr=0
     LLO_yr=0
     ENS_yr=0
@@ -577,68 +576,70 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     time=np.zeros(shape=N)
     Cap=0
     old_var=0
-    LD=np.empty(shape=(np.shape(A)))
-    GD=np.empty(shape=(np.shape(A)))
-    mod=Model(3,10,1)
-    weights_init(model=mod)
-    while err_tol>1000 and n<20:
+    Curt=np.empty(shape=np.shape(A)[1])
+    Pg=Gen_data.copy()
+    df_count=0
+    ML_df=pd.DataFrame({'LoadData':[[]],'PowerData':[[]],'PowerLoss':[[]],'Cap':[[]],'Load_hr':[[]], 'Fail':[[]]})
+    while err_tol>1e-6 and n<7000:
         print("In progress, n=",n)
         n+=1
         state=np.ones(shape=N)
-        rand_val=np.random.rand(N)
+        rand_val=np.random.uniform(0,1,N)
         count=0
+        Gen_data=Pg.copy()
+        time_TF=np.int_(np.floor(np.divide(-np.log(rand_val),Gen_data["Failure Rate"].to_numpy())))
         for i in range(Gen_data.shape[0]):
-            Gen_data.iloc[i,5]=int(-np.log(rand_val[count])/Gen_data.iloc[i,2])
+            Gen_data.iloc[i,5]=time_TF[i]
         t_n=0
         hr=0
-        Pg=Gen_data.copy()
+        data_check=1
         while hr <8759:
-            Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
+            C=np.zeros(shape=np.shape(A)[1])
             time=Gen_data.iloc[:,5].min()
             T_idx_bus=Gen_data.index[Gen_data.iloc[:,5]==time].tolist()
             down_state_idx=Gen_data.index[Gen_data.iloc[:,4]==0].tolist()
-            Power_Down=Gen_data.loc[down_state_idx,'Cap'].sum()
+            Power_Down=Pg.loc[down_state_idx,'Cap'].sum()
             Gen_data.iloc[:,5]=Gen_data.iloc[:,5]-time
+            state=Gen_data["State"].to_numpy()
+            # print(state)
             hr+=time
             if hr>8759:
                 hr=8759
             Cap=maxCap-Power_Down
-            if(Gen_data.loc[:,"State"].any()==0):
+            check=False
+            for s in state:
+                if s==0:
+                    check=True
+                    break
+            if(check):
+                data_check=1
                 for t in range(t_n,hr):
-                    count=0
-                    for i in range(np.shape(A)[1]):
-                        if i==Gen_data.loc[:,'Bus'].any()-1:
-                            GD[i]=Gen_data.loc[i+1,'Cap']
-                        else:
-                            GD[i]=0
-                        if i==Load_Buses.any()-1:
-                            LD[i]=Load_Data[count]
-                            count+=1
-                        else:
-                            LD[i]=0
-                    input=np.empty(shape=(np.shape(A)[1],3))
-                    input[:,0]=GD
-                    input[:,1]=LD
-                    input[:,2]=np.ones(np.shape(A)[1])*Power_Down
-                    input=torch.from_numpy(input).float().requires_grad_().to(device=dev)
-                    A_T=torch.from_numpy(A).float().to(device=dev)
-                    T_max_T=torch.from_numpy(T_max).float().to(device=dev)
-                    L_T=torch.tensor(load[t]).to(device=dev)
-                    print("Evaluating Curtailment at hour ", t)
-                    C=Network(mod,3,10,1,input,load[t],A_T,T_max_T).cpu().detach().numpy()
-                    for i in range(np.shape(A)[1]):
+                    Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
+                    if(load[t]>=Cap):
+                        # C=Linear_Programming(A,T,T_max,Gen_data,Load_Buses,Temp_Load,Curt)
                         count=0
-                        if i==Load_Buses.any()-1:
-                            Temp_Load[count]-=C[i]
-                            count+=1
-                    if load[t]>=np.sum(Temp_Load) or Temp_Load.any()<0:
-                        if check_down==0:
-                            LLO_yr+=1
-                            check_down=1
-                        LLD_yr+=1
-                        ENS_yr+=abs(load[t]-Cap)
+                        LD=np.zeros(shape=(np.shape(A)[1]))
+                        GD=np.zeros(shape=(np.shape(A)[1]))
+                        bus_list = [list(set([val for _,val in Gen_data.loc[:,'Bus'].items()]))]
+                        for val in bus_list[0]:
+                            GD[val-1]=Gen_data.loc[Gen_data['Bus']==val,'Cap'].sum()
+                        for (i,bus) in enumerate(Load_Buses):
+                            LD[bus-1]=Load_Data[i]
+                        if C[0]!=-1.0:
+                            print("C!=-1")
+                            for i,_ in enumerate(Load_Buses):
+                                Temp_Load[i]-=C[i]
+                        if (not (Temp_Load[0:]>np.zeros(shape=np.shape(Temp_Load[0:]))).all()) or C[0]==-1 or (np.sum(C)+Gen_data["Cap"].sum()<Cap):
+                            if check_down==0:
+                                LLO_yr+=1
+                                check_down=1
+                            LLD_yr+=1
+                            ENS_yr+=abs(load[t]-Cap)
+                        else:
+                            ML_df.loc[df_count,'Fail']=1
+                            check_down=0
+                        df_count+=1
                     else:
-                        ## G_2 or G_1
                         check_down=0
             t_n=hr
             for value in T_idx_bus:
@@ -660,9 +661,14 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
         mu_LOLE=np.mean(LOLE)
         mu_LOLF=np.mean(LOLF)
         mu_LOEE=np.mean(LOEE)
-        if n>1:
-            var=max(variance(LOEE),variance(LOLF),variance(LOEE))
-            err_tol=abs(var-old_var)
-        print(err_tol)
+        var=max(variance(LOEE),variance(LOLF),variance(LOEE))
+        err_tol=abs(var-old_var)
+        print("Error Tolerance ",err_tol)
+        print("Average LOLE ",mu_LOLE)
+        print("Average LOLF ",mu_LOLF)
+        print("Average LOEE ",mu_LOEE)
+        old_var=var
         print(n)
+    print(ML_df)
+    ML_df.to_csv('NN_data.csv')
     return mu_LOLE,mu_LOLF,mu_LOEE
