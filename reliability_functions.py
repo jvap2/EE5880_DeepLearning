@@ -11,6 +11,7 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader
 from torch import device
 from nn_reliability import weights_init, Model
+from cnn_reliability import Model_Eval
 
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
@@ -579,7 +580,6 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
     Curt=np.empty(shape=np.shape(A)[1])
     Pg=Gen_data.copy()
     df_count=0
-    ML_df=pd.DataFrame({'LoadData':[[]],'PowerData':[[]],'PowerLoss':[[]],'Cap':[[]],'Load_hr':[[]], 'Fail':[[]]})
     while err_tol>1e-6 and n<7000:
         print("In progress, n=",n)
         n+=1
@@ -612,12 +612,9 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                     check=True
                     break
             if(check):
-                data_check=1
                 for t in range(t_n,hr):
                     Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
                     if(load[t]>=Cap):
-                        # C=Linear_Programming(A,T,T_max,Gen_data,Load_Buses,Temp_Load,Curt)
-                        count=0
                         LD=np.zeros(shape=(np.shape(A)[1]))
                         GD=np.zeros(shape=(np.shape(A)[1]))
                         bus_list = [list(set([val for _,val in Gen_data.loc[:,'Bus'].items()]))]
@@ -625,18 +622,14 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                             GD[val-1]=Gen_data.loc[Gen_data['Bus']==val,'Cap'].sum()
                         for (i,bus) in enumerate(Load_Buses):
                             LD[bus-1]=Load_Data[i]
-                        if C[0]!=-1.0:
-                            print("C!=-1")
-                            for i,_ in enumerate(Load_Buses):
-                                Temp_Load[i]-=C[i]
-                        if (not (Temp_Load[0:]>np.zeros(shape=np.shape(Temp_Load[0:]))).all()) or C[0]==-1 or (np.sum(C)+Gen_data["Cap"].sum()<Cap):
+                        pred=Model_Eval(LD,GD)
+                        if not pred:
                             if check_down==0:
                                 LLO_yr+=1
                                 check_down=1
                             LLD_yr+=1
                             ENS_yr+=abs(load[t]-Cap)
                         else:
-                            ML_df.loc[df_count,'Fail']=1
                             check_down=0
                         df_count+=1
                     else:
@@ -669,6 +662,4 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
         print("Average LOEE ",mu_LOEE)
         old_var=var
         print(n)
-    print(ML_df)
-    ML_df.to_csv('NN_data.csv')
     return mu_LOLE,mu_LOLF,mu_LOEE

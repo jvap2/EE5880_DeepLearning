@@ -15,7 +15,7 @@ import seaborn
 
 global dev
 dev = 'cuda' if torch.cuda.is_available() else 'cpu'
-
+global mod
 
 class Model_CNN(nn.Module):
     def __init__(self):
@@ -98,6 +98,18 @@ class Data_NN(Dataset):
         data= self.data[index,:,:]
         lab=self.labels[index]
         return data, lab
+
+def Model_Eval(Load,Power):
+    mod.eval()
+    data=torch.empty(size=(2,24))
+    ld_tensor=ToTensor(Load)
+    pd_tensor=ToTensor(Power)
+    data[0,:]=ld_tensor
+    data[1,:]=pd_tensor
+    data.to(dev).float()
+    pred=mod(data)[:,0]
+    pred=((pred>=.5).float()).float()
+    return pred
 
 
 def Clean_Data():
