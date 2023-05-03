@@ -35,7 +35,7 @@ class Model_CNN(nn.Module):
 
         self.model.add_module('flat', nn.Flatten())
         self.model.add_module('d1', nn.Dropout(.2))
-        self.model.add_module('fc1',nn.Linear(196,64))
+        self.model.add_module('fc1',nn.Linear(192,64))
         self.model.add_module('relu4', nn.LeakyReLU(.05))
         self.model.add_module('fc2',nn.Linear(64,1))
         self.model.add_module('out', nn.Sigmoid())
@@ -61,6 +61,7 @@ def Train(Model, train_input, val_input):
             x_batch=x_batch.to(dev).float()
             y_batch=y_batch.to(dev).float()
             pred=Model(x_batch)[:0]
+            print(y_batch.float())
             loss=Model.loss_fn(pred, y_batch.float())
             loss.backward()
             Model.optim.step()
@@ -221,7 +222,7 @@ def Clean_Data():
 
 if __name__=='__main__':
     Data,Label=Clean_Data()
-    print(Data)
+    print(np.shape(Data)[0])
     dataset=Data_NN(Data,Label)
     gen_1=torch.Generator().manual_seed(42)
     train, val, test =random_split(dataset,[.8,.1,.1],gen_1)
