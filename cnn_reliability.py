@@ -9,8 +9,8 @@ from torchsummary import summary
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import json
-import ast
+from sklearn.metrics import confusion_matrix, roc_curve
+import seaborn
 
 
 global dev
@@ -50,7 +50,7 @@ class Model_CNN(nn.Module):
 
 
 def Train(Model, train_input, val_input):
-    num_epochs=30
+    num_epochs=15
     train_acc=[0]*num_epochs
     val_acc=[0]*num_epochs
     train_loss=[0]*num_epochs
@@ -60,8 +60,7 @@ def Train(Model, train_input, val_input):
         for x_batch, y_batch in train_input:
             x_batch=x_batch.to(dev).float()
             y_batch=y_batch.to(dev).float()
-            pred=Model(x_batch)[:0]
-            print(y_batch.float())
+            pred=Model(x_batch)[:,0]
             loss=Model.loss_fn(pred, y_batch.float())
             loss.backward()
             Model.optim.step()
@@ -70,14 +69,14 @@ def Train(Model, train_input, val_input):
             is_correct=((pred>=0.5).float() == y_batch).float()
             train_acc[epch]+=is_correct.sum().cpu()
 
-        train_loss[epch]/=len(train_input)
-        train_acc[epch]/=len(train_input)
+        train_loss[epch]/=len(train_input.dataset)
+        train_acc[epch]/=len(train_input.dataset)
 
         Model.eval()
         with torch.no_grad():
             for x_batch, y_batch in val_input:
-                x_batch=x_batch.to(dev)
-                y_batch=y_batch.to(dev)
+                x_batch=x_batch.to(dev).float()
+                y_batch=y_batch.to(dev).float()
                 pred = Model(x_batch)[:, 0]
                 loss = Model.loss_fn(pred, y_batch.float())
                 val_loss[epch] += loss.item()*y_batch.size(0) 
@@ -215,10 +214,17 @@ def Clean_Data():
         del pdummy[-1]
         Data[j+np.shape(LD_1)[0]+np.shape(LD_2)[0]+np.shape(LD_3)[0],0,:]=dummy
         Data[j+np.shape(LD_1)[0]+np.shape(LD_2)[0]+np.shape(LD_3)[0],1,:]=pdummy
-        Labels[j+np.shape(LD_1)[0]+np.shape(LD_2)[0]+np.shape(LD_3)[0]]=Label_3[j]
+        Labels[j+np.shape(LD_1)[0]+np.shape(LD_2)[0]+np.shape(LD_3)[0]]=Label_4[j]
     return Data,Labels
 
-
+def predict_with_pytorch(model,val_x):    
+    y_preds = []
+    val_x = val_x.cuda().float()
+    out = model(val_x)[:,0]
+    predicted = (out>=.5).float()
+    for p in predicted:
+        y_preds.append(p.detach().cpu().numpy().item())
+    return y_preds    
 
 if __name__=='__main__':
     Data,Label=Clean_Data()
@@ -226,10 +232,71 @@ if __name__=='__main__':
     dataset=Data_NN(Data,Label)
     gen_1=torch.Generator().manual_seed(42)
     train, val, test =random_split(dataset,[.8,.1,.1],gen_1)
-    train_dl=DataLoader(train,32,True)
+    train_dl=DataLoader(train,128,True)
     val_dl=DataLoader(val,32,False)
-    test_dl=DataLoader(test,32,False)
+    test_dl=DataLoader(test,len(test),False)
     mod=Model_CNN()
-    train_loss, val_loss, train_acc, val_acc = Train(mod,train_dl,val_dl)
+    hist = Train(mod,train_dl,val_dl)
+    x_arr = np.arange(len(hist[0])) + 1
 
-    
+    fig = plt.figure(figsize=(12, 4))
+    ax = fig.add_subplot(1, 2, 1)
+    ax.plot(x_arr, hist[0], '-o', label='Train loss')
+    ax.plot(x_arr, hist[1], '-->', label='Validation loss')
+    ax.legend(fontsize=15)
+    ax.grid()
+    ax.set_xlabel('Epoch', size=15)
+    ax.set_ylabel('Loss', size=15)
+    ax.set_title("Train/Validation Loss")
+
+    ax = fig.add_subplot(1, 2, 2)
+    ax.plot(x_arr, hist[2], '-o', label='Train acc.')
+    ax.plot(x_arr, hist[3], '-->', label='Validation acc.')
+    ax.legend(fontsize=15)
+    ax.grid()
+    ax.set_xlabel('Epoch', size=15)
+    ax.set_ylabel('Accuracy', size=15)
+
+    ax.set_title("Train/Validation Accuracy")
+    plt.show()
+
+    input_ft=next(iter(test_dl))[0]
+    labels=next(iter(test_dl))[1]
+    accuracy_test=0.0
+
+    #Set the trained model for evaluation to avoid calculation of gradients
+
+    mod.eval()
+
+    ##Begin evaluation without any gradient calculations
+    with torch.no_grad():
+        for x_batch, y_batch in test_dl:
+            ##Move the test ba
+            x_batch=x_batch.to(dev).float()
+            y_batch=y_batch.to(dev).float()
+            pred=mod(x_batch)[:,0]
+            is_correct=((pred>=.5).float()==y_batch).float()
+            accuracy_test+=is_correct.sum()
+    ##Divide by the length to get a value between 0 and 1
+    accuracy_test/=len(test)
+    print("Test Accuracy: {0:.4f}".format(accuracy_test))
+
+    pred=[]
+    pred.append(predict_with_pytorch(mod,input_ft))
+
+    cm = confusion_matrix(labels.numpy(),pred[0])
+    plt.figure(figsize = (8,8),dpi=250)
+    seaborn.heatmap(cm,annot=True)
+    plt.ylabel("Predicted")
+    plt.xlabel("Actual")
+    plt.title("Confusion Matrix for Test Data")
+    plt.show()
+
+    fpr, tpr, _ = roc_curve(labels.numpy(),  pred[0])
+
+    #create ROC curve
+    plt.plot(fpr,tpr)
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    plt.title("ROC Curve for Test Data")
+    plt.show()
