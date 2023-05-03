@@ -3,8 +3,9 @@ import torch.nn as nn
 import torch
 import torchvision
 from torchvision import transforms, datasets
-from torch.utils.data import DataLoader, Subset, Dataset
+from torch.utils.data import DataLoader, Subset, Dataset, random_split
 from torchvision.transforms import ToTensor
+from torchsummary import summary
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -44,7 +45,8 @@ class Model_CNN(nn.Module):
         self.loss_fn=nn.BCELoss()
 
         self.optim=torch.optim.Adam(self.parameters(), lr=1e-3)
-    
+    def forward(self,inputs):
+        return self.model(inputs)
 
 
 def Train(Model, train_input, val_input):
@@ -56,8 +58,8 @@ def Train(Model, train_input, val_input):
     for epch in range(num_epochs):
         Model.train()
         for x_batch, y_batch in train_input:
-            x_batch=x_batch.to(dev)
-            y_batch=y_batch.to(dev)
+            x_batch=x_batch.to(dev).float()
+            y_batch=y_batch.to(dev).float()
             pred=Model(x_batch)[:0]
             loss=Model.loss_fn(pred, y_batch.float())
             loss.backward()
@@ -91,7 +93,7 @@ class Data_NN(Dataset):
         self.data=d
         self.labels=labels
     def __len__(self):
-        return self.d.shape[0]
+        return self.data.shape[0]
     def __getitem__(self, index):
         data= self.data[index,:,:]
         lab=self.labels[index]
@@ -221,6 +223,12 @@ if __name__=='__main__':
     Data,Label=Clean_Data()
     print(Data)
     dataset=Data_NN(Data,Label)
-    dl=DataLoader(dataset,batch_size=32)
+    gen_1=torch.Generator().manual_seed(42)
+    train, val, test =random_split(dataset,[.8,.1,.1],gen_1)
+    train_dl=DataLoader(train,32,True)
+    val_dl=DataLoader(val,32,False)
+    test_dl=DataLoader(test,32,False)
+    mod=Model_CNN()
+    train_loss, val_loss, train_acc, val_acc = Train(mod,train_dl,val_dl)
 
     
