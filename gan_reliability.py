@@ -30,12 +30,12 @@ class Generator(nn.Module):
         #Define the neural network layers
         self.model = nn.Sequential(
             #First layer with a single input and 200 outputs
-            nn.Linear(100,200),
+            nn.ConvTranspose1d(16,32,3,2,1,1),
             #Apply LeakyRELU activation functions
             nn.LeakyReLU(0.02),
-            nn.LayerNorm(200),
+            nn.LayerNorm(32),
             #Second layer with 200 inputs and 784 outputs
-            nn.Linear(200,784),
+            nn.ConvTranspose1d(32,48,3,1,4,3),
             nn.Sigmoid()
         )
         #Generator doesn't have its own loss function
@@ -84,7 +84,7 @@ class Discriminator(nn.Module):
         #Define the neural network layers
         self.model = nn.Sequential(
             #First layer with 784 inputs and 200 outputs
-            nn.Linear(784,200),
+            nn.Linear(48,200),
             #Apply LeakyRELU activation functions
             nn.LeakyReLU(0.02),
             nn.LayerNorm(200),
