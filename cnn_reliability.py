@@ -7,6 +7,10 @@ from torch.utils.data import DataLoader, Subset
 from torchvision.transforms import ToTensor
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+import json
+import ast
+
 
 global dev
 dev = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -82,6 +86,114 @@ def Train(Model, train_input, val_input):
     return train_loss, val_loss, train_acc, val_acc
 
 
+def Convert(string):
+	list1 = []
+	list1[:0] = string
+	return list1
+
+
+def Clean_Data():
+    df_1=pd.read_csv("NN_data_1.csv")
+    df_2=pd.read_csv("NN_data_2.csv")
+    df_3=pd.read_csv("NN_data_3.csv")
+    df_4=pd.read_csv("NN_data_4.csv")
+    LD_1=df_1['LoadData'].to_numpy()
+    LD_2=df_2['LoadData'].to_numpy()
+    LD_3=df_3['LoadData'].to_numpy()
+    LD_4=df_4['LoadData'].to_numpy()
+    PD_1=df_1['PowerData'].to_numpy()
+    PD_2=df_2['PowerData'].to_numpy()
+    PD_3=df_3['PowerData'].to_numpy()
+    PD_4=df_4['PowerData'].to_numpy()
+    for j,(dummy,pdummy) in enumerate(zip(LD_1,PD_1)):
+        dummy=LD_1[j].split('.')
+        pdummy=PD_1[j].split('.')
+        for i,x in enumerate(dummy):
+            if x[:2]=='\r\n':
+                x=x[2:]
+            if x[0]=='[':
+                x=x[1:]
+            if x==']':
+                break
+            dummy[i]=float(x)
+        for i,x in enumerate(pdummy):
+            if x[:2]=='\r\n':
+                x=x[2:]
+            if x[0]=='[':
+                x=x[1:]
+            if x==']':
+                break
+            pdummy[i]=float(x)
+        del dummy[-1]
+        del pdummy[-1]
+        LD_1[j]=np.array(dummy)
+        PD_1[j]=np.array(pdummy)
+    print(LD_1)
+    for j,(dummy,pdummy) in enumerate(zip(LD_2,PD_2)):
+        dummy=LD_2[j].split('.')
+        pdummy=PD_2[j].split('.')
+        for i,x in enumerate(dummy):
+            if x[:2]=='\r\n':
+                x=x[2:]
+            if x[0]=='[':
+                x=x[1:]
+            if x==']':
+                break
+            dummy[i]=float(x)
+        for i,x in enumerate(pdummy):
+            if x[:2]=='\r\n':
+                x=x[2:]
+            if x[0]=='[':
+                x=x[1:]
+            if x==']':
+                break
+            pdummy[i]=float(x)
+        del dummy[-1]
+        del pdummy[-1]
+        LD_2[j]=np.array(dummy)
+        PD_2[j]=np.array(pdummy)
+    for j,(dummy,pdummy) in enumerate(zip(LD_3,PD_3)):
+        dummy=LD_3[j].split('.')
+        pdummy=PD_3[j].split('.')
+        for i,x in enumerate(dummy):
+            if x[:2]=='\r\n':
+                x=x[2:]
+            if x[0]=='[':
+                x=x[1:]
+            if x==']':
+                break
+            dummy[i]=float(x)
+        for i,x in enumerate(pdummy):
+            if x[:2]=='\r\n':
+                x=x[2:]
+            if x[0]=='[':
+                x=x[1:]
+            if x==']':
+                break
+            pdummy[i]=float(x)
+        del dummy[-1]
+        del pdummy[-1]
+        LD_3[j]=np.array(dummy)
+        PD_3[j]=np.array(pdummy)
+    for j,(dummy,pdummy) in enumerate(zip(LD_4,PD_4)):
+        dummy=LD_4[j].split('.')
+        pdummy=PD_4[j].split('.')
+        for i,x in enumerate(dummy):
+            if x[:2]=='\r\n':
+                x=x[2:]
+            if x[0]=='[':
+                x=x[1:]
+            if x==']':
+                break
+            dummy[i]=float(x)
+        del dummy[-1]
+        LD_4[j]=np.array(dummy)
+        PD_4[j]=np.array(pdummy)
+    print(np.shape(LD_1))
+    return LD_1,LD_2,LD_3,LD_4,PD_1,PD_2,PD_3,PD_4
+
+if __name__=='__main__':
+    LD_1,LD_2,LD_3,LD_4,PD_1,PD_2,PD_3,PD_4=Clean_Data()
 
 
     
