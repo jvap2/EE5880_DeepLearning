@@ -100,15 +100,18 @@ class Data_NN(Dataset):
         return data, lab
 
 def Model_Eval(Load,Power):
+    mod=Model_CNN()
+    mod.cuda()
     mod.eval()
-    data=torch.empty(size=(2,24))
-    ld_tensor=ToTensor(Load)
-    pd_tensor=ToTensor(Power)
-    data[0,:]=ld_tensor
-    data[1,:]=pd_tensor
-    data.to(dev).float()
-    pred=mod(data)[:,0]
-    pred=((pred>=.5).float()).float()
+    data=torch.empty(size=(1,2,24), requires_grad=False, device='cuda:0')
+    ld_tensor=torch.Tensor(Load)
+    pd_tensor=torch.Tensor(Power)
+    data[0,0,:]=ld_tensor
+    data[0,1,:]=pd_tensor
+    data = data.cuda().float()
+    out = mod(data)[:,0]
+    predicted = (out>=.5).float()
+    pred=predicted.detach().cpu().numpy().item()
     return pred
 
 
@@ -240,6 +243,7 @@ def predict_with_pytorch(model,val_x):
 
 if __name__=='__main__':
     Data,Label=Clean_Data()
+    print(np.shape(Data))
     print(np.shape(Data)[0])
     dataset=Data_NN(Data,Label)
     gen_1=torch.Generator().manual_seed(42)
