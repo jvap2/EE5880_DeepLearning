@@ -11,7 +11,7 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader
 from torch import device
 from nn_reliability import weights_init, Model
-from cnn_reliability import Model_Eval
+from cnn_reliability import Model_Eval, Fin
 
 
 def Unit_Addition_Algorithm(unit,failure_rate,repair_rate):
@@ -323,7 +323,7 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
     Pg=Gen_data.copy()
     df_count=0
     ML_df=pd.DataFrame({'LoadData':[[]],'PowerData':[[]],'PowerLoss':[[]],'Cap':[[]],'Load_hr':[[]], 'Fail':[[]]})
-    while err_tol>1e-6 and n<7000:
+    while err_tol>1e-6 and n<7000 or df_count>10000:
         print("In progress, n=",n)
         n+=1
         state=np.ones(shape=N)
@@ -356,7 +356,6 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
                     check=True
                     break
             if(check):
-                data_check=1
                 for t in range(t_n,hr):
                     Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
                     if(load[t]>=Cap):
@@ -370,45 +369,53 @@ def Seq_MC_Comp(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data,alph
                             GD[val-1]=Gen_data.loc[Gen_data['Bus']==val,'Cap'].sum()
                         for (i,bus) in enumerate(Load_Buses):
                             LD[bus-1]=Load_Data[i]
-                        ML_df.loc[df_count,'LoadData']=LD
-                        ML_df.loc[df_count,'PowerData']=GD
-                        ML_df.loc[df_count,'Cap']=Cap
-                        ML_df.loc[df_count,'PowerLoss']=Power_Down
-                        ML_df.loc[df_count,'Load_hr']=load[t]
                         if C[0]!=-1.0:
                             print("C!=-1")
                             for i,_ in enumerate(Load_Buses):
                                 Temp_Load[i]-=C[i]
                         if (not (Temp_Load[0:]>np.zeros(shape=np.shape(Temp_Load[0:]))).all()) or C[0]==-1 or (np.sum(C)+Gen_data["Cap"].sum()<Cap):
-                            ML_df.loc[df_count,'Fail']=0
+                            if not data_check:
+                                ML_df.loc[df_count,'LoadData']=LD
+                                ML_df.loc[df_count,'PowerData']=GD
+                                ML_df.loc[df_count,'Cap']=Cap
+                                ML_df.loc[df_count,'PowerLoss']=Power_Down
+                                ML_df.loc[df_count,'Load_hr']=load[t]
+                                ML_df.loc[df_count,'Fail']=0
+                                data_check=1
                             if check_down==0:
                                 LLO_yr+=1
                                 check_down=1
                             LLD_yr+=1
                             ENS_yr+=abs(load[t]-Cap)
                         else:
-                            ML_df.loc[df_count,'Fail']=1
+                            if data_check:
+                                ML_df.loc[df_count,'LoadData']=LD
+                                ML_df.loc[df_count,'PowerData']=GD
+                                ML_df.loc[df_count,'Cap']=Cap
+                                ML_df.loc[df_count,'PowerLoss']=Power_Down
+                                ML_df.loc[df_count,'Load_hr']=load[t]
+                                ML_df.loc[df_count,'Fail']=1
+                                data_check=0
                             check_down=0
                         df_count+=1
                     else:
                         check_down=0
             else:
                 if data_check:
-                    for t in range(t_n,hr):
-                        LD=np.zeros(shape=(np.shape(A)[1]))
-                        GD=np.zeros(shape=(np.shape(A)[1]))
-                        bus_list = [list(set([val for _,val in Gen_data.loc[:,'Bus'].items()]))]
-                        for val in bus_list[0]:
-                            GD[val-1]=Gen_data.loc[Gen_data['Bus']==val,'Cap'].sum()
-                        for (i,bus) in enumerate(Load_Buses):
-                            LD[bus-1]=Load_Data[i]
-                        ML_df.loc[df_count,'LoadData']=LD
-                        ML_df.loc[df_count,'PowerData']=GD
-                        ML_df.loc[df_count,'Cap']=Cap
-                        ML_df.loc[df_count,'PowerLoss']=Power_Down
-                        ML_df.loc[df_count,'Load_hr']=load[t]
-                        ML_df.loc[df_count,'Fail']=1
-                        df_count+=1
+                    LD=np.zeros(shape=(np.shape(A)[1]))
+                    GD=np.zeros(shape=(np.shape(A)[1]))
+                    bus_list = [list(set([val for _,val in Gen_data.loc[:,'Bus'].items()]))]
+                    for val in bus_list[0]:
+                        GD[val-1]=Gen_data.loc[Gen_data['Bus']==val,'Cap'].sum()
+                    for (i,bus) in enumerate(Load_Buses):
+                        LD[bus-1]=Load_Data[i]
+                    ML_df.loc[df_count,'LoadData']=LD
+                    ML_df.loc[df_count,'PowerData']=GD
+                    ML_df.loc[df_count,'Cap']=Cap
+                    ML_df.loc[df_count,'PowerLoss']=Power_Down
+                    ML_df.loc[df_count,'Load_hr']=load[hr]
+                    ML_df.loc[df_count,'Fail']=1
+                    df_count+=1
                     data_check=0
             t_n=hr
             for value in T_idx_bus:
@@ -561,6 +568,7 @@ def Constraints(C,A,GD,LD,T_max,Pl,alpha):
     
 
 def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
+    Fin()
     print(type(Gen_data))
     err_tol=1e10
     LLD=[9]
@@ -607,33 +615,27 @@ def Seq_MC_NN(load,gen,N,maxCap,A,T,T_max,W,Load_Buses,Load_Data,Gen_data):
                 hr=8759
             Cap=maxCap-Power_Down
             check=False
-            for s in state:
-                if s==0:
-                    check=True
-                    break
-            if(check):
-                for t in range(t_n,hr):
-                    Temp_Load=np.array(np.copy(Load_Data),dtype=np.float64)
-                    if(load[t]>=Cap):
-                        LD=np.zeros(shape=(np.shape(A)[1]))
-                        GD=np.zeros(shape=(np.shape(A)[1]))
-                        bus_list = [list(set([val for _,val in Gen_data.loc[:,'Bus'].items()]))]
-                        for val in bus_list[0]:
-                            GD[val-1]=Gen_data.loc[Gen_data['Bus']==val,'Cap'].sum()
-                        for (i,bus) in enumerate(Load_Buses):
-                            LD[bus-1]=Load_Data[i]
-                        pred=Model_Eval(LD,GD)
-                        if not pred:
-                            if check_down==0:
-                                LLO_yr+=1
-                                check_down=1
-                            LLD_yr+=1
-                            ENS_yr+=abs(load[t]-Cap)
-                        else:
-                            check_down=0
-                        df_count+=1
+            for t in range(t_n,hr):
+                if(load[t]>=Cap):
+                    LD=np.zeros(shape=(np.shape(A)[1]))
+                    GD=np.zeros(shape=(np.shape(A)[1]))
+                    bus_list = [list(set([val for _,val in Gen_data.loc[:,'Bus'].items()]))]
+                    for val in bus_list[0]:
+                        GD[val-1]=Gen_data.loc[Gen_data['Bus']==val,'Cap'].sum()
+                    for (i,bus) in enumerate(Load_Buses):
+                        LD[bus-1]=Load_Data[i]
+                    pred=Model_Eval(LD,GD)
+                    if not pred:
+                        if check_down==0:
+                            LLO_yr+=1
+                            check_down=1
+                        LLD_yr+=1
+                        ENS_yr+=abs(load[t]-Cap)
                     else:
                         check_down=0
+                    df_count+=1
+                else:
+                    check_down=0
             t_n=hr
             for value in T_idx_bus:
                 if state[value]==0:

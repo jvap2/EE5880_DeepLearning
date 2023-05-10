@@ -34,9 +34,10 @@ class Model_CNN(nn.Module):
         self.model.add_module('pool3',nn.MaxPool1d(2,2))
 
         self.model.add_module('flat', nn.Flatten())
-        self.model.add_module('d1', nn.Dropout(.2))
+        self.model.add_module('d1', nn.Dropout(.5))
         self.model.add_module('fc1',nn.Linear(192,64))
         self.model.add_module('relu4', nn.LeakyReLU(.05))
+        self.model.add_module('d2', nn.Dropout(.2))
         self.model.add_module('fc2',nn.Linear(64,1))
         self.model.add_module('out', nn.Sigmoid())
 
@@ -50,7 +51,7 @@ class Model_CNN(nn.Module):
 
 
 def Train(Model, train_input, val_input):
-    num_epochs=15
+    num_epochs=45
     train_acc=[0]*num_epochs
     val_acc=[0]*num_epochs
     train_loss=[0]*num_epochs
@@ -110,7 +111,7 @@ def Model_Eval(Load,Power):
     data[0,1,:]=pd_tensor
     data = data.cuda().float()
     out = mod(data)[:,0]
-    predicted = (out>=.5).float()
+    predicted = (out>=.5).bool()
     pred=predicted.detach().cpu().numpy().item()
     return pred
 
@@ -241,14 +242,14 @@ def predict_with_pytorch(model,val_x):
         y_preds.append(p.detach().cpu().numpy().item())
     return y_preds    
 
-if __name__=='__main__':
+def Fin():
     Data,Label=Clean_Data()
     print(np.shape(Data))
     print(np.shape(Data)[0])
     dataset=Data_NN(Data,Label)
     gen_1=torch.Generator().manual_seed(42)
     train, val, test =random_split(dataset,[.8,.1,.1],gen_1)
-    train_dl=DataLoader(train,128,True)
+    train_dl=DataLoader(train,512,True)
     val_dl=DataLoader(val,32,False)
     test_dl=DataLoader(test,len(test),False)
     mod=Model_CNN()
@@ -298,7 +299,6 @@ if __name__=='__main__':
     ##Divide by the length to get a value between 0 and 1
     accuracy_test/=len(test)
     print("Test Accuracy: {0:.4f}".format(accuracy_test))
-
     pred=[]
     pred.append(predict_with_pytorch(mod,input_ft))
 
